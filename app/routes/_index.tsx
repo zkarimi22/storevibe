@@ -20,9 +20,42 @@ import {
   ButtonGroup,
   Popover,
   ActionList,
-  Toast
+  Toast,
+  Scrollable
 } from '@shopify/polaris';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+// Sample showcase items - in a real app, these would come from a database or API
+const showcaseItems = [
+  {
+    id: '1',
+    mode: 'moodboard',
+    storeUrl: 'allbirds.com',
+    vibePrompt: 'Sustainable, earthy, and minimal with soft textures and natural tones. The color palette features muted greens, beiges, and sky blues. Appeals to eco-conscious millennials seeking comfort with purpose. #E5E5E0',
+    imageUrl: 'https://picsum.photos/id/27/800/600'
+  },
+  {
+    id: '2',
+    mode: 'city',
+    storeUrl: 'glossier.com',
+    vibePrompt: 'A clean, pastel-colored district where glass buildings reflect soft pink skies. Wide promenades lined with minimalist boutiques. Young professionals stroll with confidence between beauty salons and cafés. #FFCBDB',
+    imageUrl: 'https://picsum.photos/id/28/800/600'
+  },
+  {
+    id: '3',
+    mode: 'cover',
+    storeUrl: 'nike.com',
+    vibePrompt: 'Bold sports lifestyle magazine with dynamic typography and high-contrast action photography. Combines urban street style with performance athletics. Would fit in the activewear or fitness genre. #FF0000',
+    imageUrl: 'https://picsum.photos/id/29/800/600'
+  },
+  {
+    id: '4',
+    mode: 'moodboard',
+    storeUrl: 'apple.com',
+    vibePrompt: 'Sleek, premium and minimalist with focus on clean lines and sophisticated typography. The color palette is monochromatic with hints of silver and space gray. Appeals to design-conscious professionals. #F5F5F7',
+    imageUrl: 'https://picsum.photos/id/30/800/600'
+  }
+];
 
 export const meta: MetaFunction = () => {
   return [
@@ -87,6 +120,7 @@ export default function Index() {
   const [popoverActive, setPopoverActive] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [showShowcase, setShowShowcase] = useState(true);
 
   const togglePopoverActive = () => setPopoverActive(!popoverActive);
   
@@ -133,6 +167,13 @@ export default function Index() {
     { label: '🎭 Magazine/Album Cover', value: 'cover' }
   ];
 
+  // Hide showcase when results are shown
+  useEffect(() => {
+    if (actionData?.vibePrompt && !actionData.error) {
+      setShowShowcase(false);
+    }
+  }, [actionData]);
+
   return (
     <Frame>
       <Page
@@ -142,6 +183,8 @@ export default function Index() {
           <Badge tone="info">Beta</Badge>
         }
       >
+        
+
         <LegacyCard sectioned>
           <Text variant="bodyMd" as="p">
             Enter your Shopify store URL to generate a unique vibe — as a brand moodboard, a poetic cityscape, or a stylish magazine/album cover.
@@ -295,7 +338,7 @@ export default function Index() {
                             onAction: handleCopyToClipboard,
                           },
                           {
-                            content: 'Share on Twitter',
+                            content: 'Share on X',
                             onAction: handleShareOnTwitter,
                           },
                           {
@@ -318,6 +361,79 @@ export default function Index() {
             </LegacyCard>
           </div>
         )}
+
+         {/* Showcase Slider */}
+        {showShowcase && (
+          <div style={{  marginBottom: '40px', paddingTop: '20px', backgroundColor: 'var(--p-surface-subdued)', borderRadius: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <Text variant="headingMd" as="h2">Explore Generated Vibes</Text>
+              <Button
+                variant="plain"
+                onClick={() => setShowShowcase(false)}
+              >
+                Hide examples
+              </Button>
+            </div>
+            <Scrollable style={{ height: 'auto' }} horizontal>
+              <div style={{ 
+                display: 'flex', 
+                gap: '16px', 
+                padding: '8px 4px 16px 4px'
+              }}>
+                {showcaseItems.map((item) => (
+                  <div 
+                    key={item.id} 
+                    style={{ 
+                      width: '280px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: '1px solid var(--p-border-subdued)',
+                      background: 'white',
+                      flexShrink: 0,
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    <div style={{ height: '160px', overflow: 'hidden' }}>
+                      <img
+                        src={item.imageUrl}
+                        alt={`${item.mode} example for ${item.storeUrl}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+                    <div style={{ padding: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <Badge tone="success" progress="complete">
+                          {
+                            item.mode === "city" 
+                              ? "🏙 Store as a City" 
+                              : item.mode === "cover" 
+                                ? "🎭 Magazine/Album Cover" 
+                                : "🧵 Moodboard"
+                          }
+                        </Badge>
+                        <span style={{ color: 'var(--p-text-subdued)', fontSize: '12px' }}>{item.storeUrl}</span>
+                      </div>
+                      <div style={{ maxHeight: '60px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <Text variant="bodyMd" as="p">{item.vibePrompt.substring(0, 90)}...</Text>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Scrollable>
+          </div>
+        )}
+
+        
       </Page>
     </Frame>
   );
