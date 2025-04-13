@@ -16,13 +16,39 @@ import {
   LegacyStack,
   Frame,
   Divider,
-  Badge
+  Badge,
+  ButtonGroup,
+  Popover,
+  ActionList,
+  Toast
 } from '@shopify/polaris';
+import { useState } from 'react';
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "Store Vibe Generator" },
-    { name: "description", content: "Generate an AI moodboard, cityscape, or magazine/album cover based on your Shopify store." },
+    { title: "Store Vibe Generator | AI Moodboards for Shopify Stores" },
+    { name: "description", content: "Transform your Shopify store into AI-generated moodboards, cityscapes, or magazine covers. Visualize your brand's unique vibe with just one click." },
+    // Primary Meta Tags
+    { name: "keywords", content: "Shopify, AI, moodboard, store vibe, ecommerce, brand identity, marketing tool" },
+    { name: "author", content: "Store Vibe Generator" },
+    // Open Graph / Facebook
+    { property: "og:type", content: "website" },
+    { property: "og:url", content: "https://storevibe.zkarimi.com" },
+    { property: "og:title", content: "Store Vibe Generator | AI Moodboards for Shopify Stores" },
+    { property: "og:description", content: "Transform your Shopify store into AI-generated moodboards, cityscapes, or magazine covers. Visualize your brand's unique vibe with just one click." },
+    { property: "og:image", content: "https://storevibe.zkarimi.com/og-image.png" },
+    // Twitter
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:url", content: "https://storevibe.zkarimi.com/" },
+    { name: "twitter:title", content: "Store Vibe Generator | AI Moodboards for Shopify Stores" },
+    { name: "twitter:description", content: "Transform your Shopify store into AI-generated moodboards, cityscapes, or magazine covers. Visualize your brand's unique vibe with just one click." },
+    { name: "twitter:image", content: "https://storevibe.zkarimi.com/og-image.png" },
+    // Additional SEO
+    { name: "robots", content: "index, follow" },
+    { name: "language", content: "English" },
+    { name: "revisit-after", content: "7 days" },
+    // Add canonical URL to prevent duplicate content issues
+    { tagName: "link", rel: "canonical", href: "https://storevibe.zkarimi.com/" },
   ];
 };
 
@@ -58,6 +84,48 @@ export default function Index() {
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
+  const [popoverActive, setPopoverActive] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  const togglePopoverActive = () => setPopoverActive(!popoverActive);
+  
+  const handleCopyToClipboard = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setToastMessage("Link copied to clipboard!");
+    setShowToast(true);
+    setPopoverActive(false);
+  };
+
+  const handleShareOnTwitter = () => {
+    const text = actionData?.mode === "city" 
+      ? "Check out this AI-generated cityscape of my store!" 
+      : actionData?.mode === "cover" 
+        ? "Check out this AI-generated magazine cover for my store!" 
+        : "Check out this AI-generated moodboard for my store!";
+    
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`, '_blank');
+    setPopoverActive(false);
+  };
+
+  const handleShareOnFacebook = () => {
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+    setPopoverActive(false);
+  };
+
+  const handleDownloadImage = () => {
+    if (actionData?.imageUrl) {
+      const link = document.createElement('a');
+      link.href = actionData.imageUrl;
+      link.download = `store-vibe-${actionData.mode}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setPopoverActive(false);
+    }
+  };
 
   const modeOptions = [
     { label: '🧵 Moodboard', value: 'moodboard' },
@@ -120,7 +188,7 @@ export default function Index() {
                   <select
                     name="mode"
                     id="mode"
-                    defaultValue="moodboard"
+                    defaultValue="cover"
                     style={{
                       width: '100%',
                       padding: '8px 12px',
@@ -206,14 +274,45 @@ export default function Index() {
                 )}
 
                 <LegacyStack distribution="trailing">
-                  <Button 
-                    onClick={() => {
-                      navigator.clipboard.writeText(window.location.href);
-                    }}
-                    variant="primary"
-                  >
-                    Share your store vibe
-                  </Button>
+                  <div>
+                    <Popover
+                      active={popoverActive}
+                      activator={
+                        <Button
+                          onClick={togglePopoverActive}
+                          variant="primary"
+                        >
+                          Share this vibe 🚀
+                        </Button>
+                      }
+                      onClose={togglePopoverActive}
+                    >
+                      <ActionList
+                        actionRole="menuitem"
+                        items={[
+                          {
+                            content: 'Copy link',
+                            onAction: handleCopyToClipboard,
+                          },
+                          {
+                            content: 'Share on Twitter',
+                            onAction: handleShareOnTwitter,
+                          },
+                          {
+                            content: 'Share on Facebook',
+                            onAction: handleShareOnFacebook,
+                          },
+                          ...(actionData?.imageUrl ? [{
+                            content: 'Download image',
+                            onAction: handleDownloadImage,
+                          }] : []),
+                        ]}
+                      />
+                    </Popover>
+                    {showToast && (
+                      <Toast content={toastMessage} onDismiss={() => setShowToast(false)} />
+                    )}
+                  </div>
                 </LegacyStack>
               </LegacyCard.Section>
             </LegacyCard>
