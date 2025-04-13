@@ -6,6 +6,7 @@ import { OpenAI } from "openai";
 import { v2 as cloudinary } from 'cloudinary';
 import { connectToDatabase, getClientIp } from '~/utils/db.server';
 import { checkRateLimit } from '~/utils/rate-limiter';
+import { createSeoId } from '~/utils/seo-utils';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -137,6 +138,7 @@ async function saveVibeToDatabase(data: {
   vibePrompt: string;
   imageUrl: string;
   ipAddress?: string;
+  seoId: string;
 }, db: any) {
   try {
     const collection = db.collection("vibeResults");
@@ -147,8 +149,8 @@ async function saveVibeToDatabase(data: {
       isPublic: true, // You can set this based on user preference in the future
     });
     
-    console.log(`Vibe data saved to MongoDB with ID: ${result.insertedId}`);
-    return result.insertedId;
+    console.log(`Vibe data saved to MongoDB with ID: ${result.insertedId} and SEO ID: ${data.seoId}`);
+    return { dbId: result.insertedId, seoId: data.seoId };
   } catch (error) {
     console.error("Error saving to MongoDB:", error);
     // We don't throw here to prevent the API from failing if DB save fails
@@ -246,6 +248,17 @@ export async function action({ request }: ActionFunctionArgs) {
     
     const { storeUrl, mode = "moodboard" } = await request.json();
 
+    // Generate SEO-friendly ID
+    const seoId = createSeoId(storeUrl);
+
+    // Check if the SEO ID already exists
+    const existingVibe = await db.collection("vibeResults").findOne({ seoId });
+    
+    // If it exists, generate a new one by adding a timestamp to make it unique
+    const finalSeoId = existingVibe 
+      ? `${seoId}-${Date.now().toString().slice(-4)}` 
+      : seoId;
+
     // 1. Capture screenshot of the store
     const screenshot = await captureStoreScreenshot(storeUrl);
 
@@ -256,12 +269,13 @@ export async function action({ request }: ActionFunctionArgs) {
     const imageUrl = await generateImage(vibePrompt, mode, storeUrl);
 
     // 4. Save everything to MongoDB
-    const dbId = await saveVibeToDatabase({
+    const dbResult = await saveVibeToDatabase({
       storeUrl,
       mode,
       vibePrompt,
       imageUrl,
-      ipAddress // Store the IP address for analytics
+      ipAddress, // Store the IP address for analytics
+      seoId: finalSeoId
     }, db);
 
     return json({
@@ -269,7 +283,8 @@ export async function action({ request }: ActionFunctionArgs) {
       imageUrl,
       storeUrl,
       mode,
-      dbId,
+      dbId: dbResult?.dbId,
+      seoId: dbResult?.seoId,
       // Include rate limit info but don't display it in the UI
       // This is available for debugging and potential future admin features
       rateLimitInfo: {

@@ -30,6 +30,7 @@ interface VibeData {
   imageUrl: string;
   createdAt: string;
   isPublic: boolean;
+  seoId?: string;
 }
 
 interface LoaderData {
@@ -117,7 +118,14 @@ export default function VibeDetail() {
   const togglePopoverActive = () => setPopoverActive(!popoverActive);
   
   const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(window.location.href);
+    if (!vibe) return;
+    
+    // Use SEO ID if available, otherwise use MongoDB ID
+    const shareUrl = vibe.seoId
+      ? `${window.location.origin}/v/${vibe.seoId}`
+      : window.location.href;
+      
+    navigator.clipboard.writeText(shareUrl);
     setToastMessage("Link copied to clipboard!");
     setShowToast(true);
     setPopoverActive(false);
@@ -132,13 +140,25 @@ export default function VibeDetail() {
         ? `Check out this AI-generated magazine cover for ${vibe.storeUrl}!` 
         : `Check out this AI-generated moodboard for ${vibe.storeUrl}!`;
     
-    const url = encodeURIComponent(window.location.href);
+    // Use SEO ID if available, otherwise use MongoDB ID
+    const shareUrl = vibe.seoId
+      ? `${window.location.origin}/v/${vibe.seoId}`
+      : window.location.href;
+    
+    const url = encodeURIComponent(shareUrl);
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`, '_blank');
     setPopoverActive(false);
   };
 
   const handleShareOnFacebook = () => {
-    const url = encodeURIComponent(window.location.href);
+    if (!vibe) return;
+    
+    // Use SEO ID if available, otherwise use MongoDB ID
+    const shareUrl = vibe.seoId
+      ? `${window.location.origin}/v/${vibe.seoId}`
+      : window.location.href;
+      
+    const url = encodeURIComponent(shareUrl);
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
     setPopoverActive(false);
   };

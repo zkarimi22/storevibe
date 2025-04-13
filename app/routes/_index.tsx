@@ -126,10 +126,12 @@ export default function Index() {
   const togglePopoverActive = () => setPopoverActive(!popoverActive);
   
   const handleCopyToClipboard = () => {
-    // If we have a dbId, use the vibe/:id URL for sharing
-    const shareUrl = actionData?.dbId 
-      ? `${window.location.origin}/vibe/${actionData.dbId}`
-      : window.location.href;
+    // Use SEO ID if available, otherwise use MongoDB ID, and fallback to window.location.href
+    const shareUrl = actionData?.seoId 
+      ? `${window.location.origin}/v/${actionData.seoId}`
+      : actionData?.dbId 
+        ? `${window.location.origin}/vibe/${actionData.dbId}`
+        : window.location.href;
       
     navigator.clipboard.writeText(shareUrl);
     setToastMessage("Link copied to clipboard!");
@@ -138,10 +140,12 @@ export default function Index() {
   };
 
   const handleShareOnTwitter = () => {
-    // If we have a dbId, use the vibe/:id URL for sharing
-    const shareUrl = actionData?.dbId 
-      ? `${window.location.origin}/vibe/${actionData.dbId}`
-      : window.location.href;
+    // Use SEO ID if available, otherwise use MongoDB ID, and fallback to window.location.href
+    const shareUrl = actionData?.seoId 
+      ? `${window.location.origin}/v/${actionData.seoId}`
+      : actionData?.dbId 
+        ? `${window.location.origin}/vibe/${actionData.dbId}`
+        : window.location.href;
       
     const text = actionData?.mode === "city" 
       ? "Check out this AI-generated cityscape of my store!" 
@@ -155,10 +159,12 @@ export default function Index() {
   };
 
   const handleShareOnFacebook = () => {
-    // If we have a dbId, use the vibe/:id URL for sharing
-    const shareUrl = actionData?.dbId 
-      ? `${window.location.origin}/vibe/${actionData.dbId}`
-      : window.location.href;
+    // Use SEO ID if available, otherwise use MongoDB ID, and fallback to window.location.href
+    const shareUrl = actionData?.seoId 
+      ? `${window.location.origin}/v/${actionData.seoId}`
+      : actionData?.dbId 
+        ? `${window.location.origin}/vibe/${actionData.dbId}`
+        : window.location.href;
       
     const url = encodeURIComponent(shareUrl);
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
@@ -339,9 +345,11 @@ export default function Index() {
 
                 <LegacyStack distribution="trailing">
                   <ButtonGroup>
-                    {actionData.dbId && (
+                    {(actionData.dbId || actionData.seoId) && (
                       <Button
-                        url={`/vibe/${actionData.dbId}`}
+                        url={actionData.seoId 
+                          ? `/v/${actionData.seoId}` 
+                          : `/vibe/${actionData.dbId}`}
                         variant="secondary"
                       >
                         View Permanent Page

@@ -25,6 +25,7 @@ type VibeResult = {
   vibePrompt: string;
   imageUrl: string;
   createdAt: string;
+  seoId?: string;
 };
 
 type LoaderData = {
@@ -96,7 +97,12 @@ export default function ExploreVibes() {
 
   const handleShareLink = useCallback(() => {
     if (!selectedVibe) return;
-    const shareUrl = `${window.location.origin}/vibe/${selectedVibe._id}`;
+    
+    // Use SEO ID if available, otherwise use MongoDB ID
+    const shareUrl = selectedVibe.seoId
+      ? `${window.location.origin}/v/${selectedVibe.seoId}`
+      : `${window.location.origin}/vibe/${selectedVibe._id}`;
+      
     navigator.clipboard.writeText(shareUrl);
     setToastMessage('Link copied to clipboard!');
     setShowToast(true);
@@ -104,33 +110,58 @@ export default function ExploreVibes() {
 
   const handleShareTwitter = useCallback(() => {
     if (!selectedVibe) return;
+    
     const text = `Check out this ${selectedVibe.mode} vibe for ${selectedVibe.storeUrl} created by Store Vibe Generator!`;
-    const url = encodeURIComponent(`${window.location.origin}/vibe/${selectedVibe._id}`);
+    
+    // Use SEO ID if available, otherwise use MongoDB ID
+    const shareUrl = selectedVibe.seoId
+      ? `${window.location.origin}/v/${selectedVibe.seoId}`
+      : `${window.location.origin}/vibe/${selectedVibe._id}`;
+      
+    const url = encodeURIComponent(shareUrl);
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`, '_blank');
   }, [selectedVibe]);
 
   const handleShareFacebook = useCallback(() => {
     if (!selectedVibe) return;
-    const url = encodeURIComponent(`${window.location.origin}/vibe/${selectedVibe._id}`);
+    
+    // Use SEO ID if available, otherwise use MongoDB ID
+    const shareUrl = selectedVibe.seoId
+      ? `${window.location.origin}/v/${selectedVibe.seoId}`
+      : `${window.location.origin}/vibe/${selectedVibe._id}`;
+      
+    const url = encodeURIComponent(shareUrl);
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
   }, [selectedVibe]);
 
   const handleSharePinterest = useCallback(() => {
     if (!selectedVibe) return;
-    const url = encodeURIComponent(`${window.location.origin}/vibe/${selectedVibe._id}`);
+    
+    // Use SEO ID if available, otherwise use MongoDB ID
+    const shareUrl = selectedVibe.seoId
+      ? `${window.location.origin}/v/${selectedVibe.seoId}`
+      : `${window.location.origin}/vibe/${selectedVibe._id}`;
+      
+    const encodedUrl = encodeURIComponent(shareUrl);
     const media = encodeURIComponent(selectedVibe.imageUrl);
     const description = encodeURIComponent(`${selectedVibe.mode} vibe for ${selectedVibe.storeUrl}`);
-    window.open(`https://pinterest.com/pin/create/button/?url=${url}&media=${media}&description=${description}`, '_blank');
+    window.open(`https://pinterest.com/pin/create/button/?url=${encodedUrl}&media=${media}&description=${description}`, '_blank');
   }, [selectedVibe]);
 
   const handleShareEmail = useCallback(() => {
     if (!selectedVibe) return;
+    
+    // Use SEO ID if available, otherwise use MongoDB ID
+    const shareUrl = selectedVibe.seoId
+      ? `${window.location.origin}/v/${selectedVibe.seoId}`
+      : `${window.location.origin}/vibe/${selectedVibe._id}`;
+      
     const subject = encodeURIComponent(`Store Vibe Generator: ${selectedVibe.storeUrl} ${selectedVibe.mode}`);
     const body = encodeURIComponent(
       `Check out this store vibe I found:\n\n` +
       `Store: ${selectedVibe.storeUrl}\n` +
       `Type: ${selectedVibe.mode}\n\n` +
-      `${window.location.origin}/vibe/${selectedVibe._id}`
+      `${shareUrl}`
     );
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
   }, [selectedVibe]);
@@ -229,7 +260,9 @@ export default function ExploreVibes() {
                   <Button onClick={handleCloseModal}>Close</Button>
                   <Button 
                     variant="primary"
-                    url={`/vibe/${selectedVibe._id}`}
+                    url={selectedVibe.seoId 
+                      ? `/v/${selectedVibe.seoId}` 
+                      : `/vibe/${selectedVibe._id}`}
                   >
                     View Permanent Page
                   </Button>
@@ -326,7 +359,9 @@ export default function ExploreVibes() {
                       </div>
                       <Button
                         size="slim"
-                        url={`/vibe/${vibe._id}`}
+                        url={vibe.seoId 
+                          ? `/v/${vibe.seoId}` 
+                          : `/vibe/${vibe._id}`}
                       >
                         View Details
                       </Button>
