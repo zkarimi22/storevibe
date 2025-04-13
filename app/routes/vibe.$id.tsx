@@ -1,7 +1,7 @@
 import { json } from "@remix-run/node";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
-import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import ReactMarkdown from 'react-markdown';
 import {
   Page,
@@ -19,29 +19,23 @@ import {
   Scrollable
 } from '@shopify/polaris';
 import { useState } from 'react';
+import { connectToDatabase } from '~/utils/db.server';
 
-// Initialize MongoDB connection
-const uri = process.env.MONGODB_URI || "";
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
+// Define TypeScript interfaces for our data
+interface VibeData {
+  _id: string;
+  storeUrl: string;
+  mode: string;
+  vibePrompt: string;
+  imageUrl: string;
+  createdAt: string;
+  isPublic: boolean;
+}
 
-let db: any;
-async function connectToDatabase() {
-  if (!db) {
-    try {
-      await client.connect();
-      db = client.db("storeVibeGenerator");
-    } catch (error) {
-      console.error("Failed to connect to MongoDB:", error);
-      throw error;
-    }
-  }
-  return db;
+interface LoaderData {
+  vibe: VibeData | null;
+  relatedVibes: VibeData[];
+  error: string | null;
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
@@ -85,16 +79,16 @@ export async function loader({ params }: LoaderFunctionArgs) {
     const id = params.id;
     
     if (!id || !ObjectId.isValid(id)) {
-      return json({ error: "Invalid ID format" }, { status: 400 });
+      return json({ error: "Invalid ID format", vibe: null, relatedVibes: [] }, { status: 400 });
     }
     
-    const database = await connectToDatabase();
-    const collection = database.collection("vibeResults");
+    const { db } = await connectToDatabase();
+    const collection = db.collection("vibeResults");
     
     const vibe = await collection.findOne({ _id: new ObjectId(id) });
     
     if (!vibe) {
-      return json({ error: "Vibe not found", vibe: null }, { status: 404 });
+      return json({ error: "Vibe not found", vibe: null, relatedVibes: [] }, { status: 404 });
     }
     
     // Fetch related vibes of the same mode, excluding the current one
@@ -112,23 +106,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
     console.error("Error fetching vibe:", error);
     return json({ error: "Failed to fetch vibe", vibe: null, relatedVibes: [] }, { status: 500 });
   }
-}
-
-// Define TypeScript interfaces for our data
-interface VibeData {
-  _id: string;
-  storeUrl: string;
-  mode: string;
-  vibePrompt: string;
-  imageUrl: string;
-  createdAt: string;
-  isPublic: boolean;
-}
-
-interface LoaderData {
-  vibe: VibeData | null;
-  relatedVibes: VibeData[];
-  error: string | null;
 }
 
 export default function VibeDetail() {

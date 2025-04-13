@@ -4,7 +4,8 @@ import { json } from "@remix-run/node";
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { OpenAI } from "openai";
 import { v2 as cloudinary } from 'cloudinary';
-import { MongoClient, ServerApiVersion } from 'mongodb';
+import { connectToDatabase, getClientIp } from '~/utils/db.server';
+import { checkRateLimit } from '~/utils/rate-limiter';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -12,32 +13,6 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
-
-// Configure MongoDB
-const uri = process.env.MONGODB_URI || "";
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
-// Initialize database connection
-let db: any;
-async function connectToDatabase() {
-  if (!db) {
-    try {
-      await client.connect();
-      db = client.db("storeVibeGenerator");
-      console.log("Connected to MongoDB");
-    } catch (error) {
-      console.error("Failed to connect to MongoDB:", error);
-      throw error;
-    }
-  }
-  return db;
-}
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -161,10 +136,10 @@ async function saveVibeToDatabase(data: {
   mode: string;
   vibePrompt: string;
   imageUrl: string;
-}) {
+  ipAddress?: string;
+}, db: any) {
   try {
-    const database = await connectToDatabase();
-    const collection = database.collection("vibeResults");
+    const collection = db.collection("vibeResults");
     
     const result = await collection.insertOne({
       ...data,
@@ -240,6 +215,35 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   try {
+    const { db, client } = await connectToDatabase();
+    
+    // Get client IP address
+    const ipAddress = getClientIp(request);
+    
+    // Check rate limit (10 generations per day)
+    const rateLimit = await checkRateLimit(
+      ipAddress,
+      'generate-vibe',
+      { 
+        limit: 10, 
+        window: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+      },
+      client
+    );
+    
+    // If rate limit exceeded, return error
+    if (!rateLimit.allowed) {
+      return json({ 
+        error: "Rate limit exceeded. Please try again later.",
+        // Keep the rateLimitInfo in the response for internal/debugging purposes,
+        // but don't display it in the UI
+        rateLimitInfo: {
+          remaining: rateLimit.remaining,
+          resetAt: rateLimit.resetAt
+        }
+      }, { status: 429 });
+    }
+    
     const { storeUrl, mode = "moodboard" } = await request.json();
 
     // 1. Capture screenshot of the store
@@ -256,15 +260,22 @@ export async function action({ request }: ActionFunctionArgs) {
       storeUrl,
       mode,
       vibePrompt,
-      imageUrl
-    });
+      imageUrl,
+      ipAddress // Store the IP address for analytics
+    }, db);
 
     return json({
       vibePrompt,
       imageUrl,
       storeUrl,
       mode,
-      dbId // Optionally return the database ID
+      dbId,
+      // Include rate limit info but don't display it in the UI
+      // This is available for debugging and potential future admin features
+      rateLimitInfo: {
+        remaining: rateLimit.remaining - 1,
+        resetAt: rateLimit.resetAt
+      }
     });
   } catch (error) {
     console.error("Error generating store vibe:", error);

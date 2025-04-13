@@ -1,31 +1,6 @@
 import { json } from "@remix-run/node";
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { MongoClient, ServerApiVersion } from 'mongodb';
-
-// Configure MongoDB (same as in your generate-vibe file)
-const uri = process.env.MONGODB_URI || "";
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
-// Initialize database connection
-let db: any;
-async function connectToDatabase() {
-  if (!db) {
-    try {
-      await client.connect();
-      db = client.db("storeVibeGenerator");
-    } catch (error) {
-      console.error("Failed to connect to MongoDB:", error);
-      throw error;
-    }
-  }
-  return db;
-}
+import { connectToDatabase } from '~/utils/db.server';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -35,8 +10,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const skip = (page - 1) * limit;
   
   try {
-    const database = await connectToDatabase();
-    const collection = database.collection("vibeResults");
+    const { db } = await connectToDatabase();
+    const collection = db.collection("vibeResults");
     
     // Build query
     const query: any = { isPublic: true };
