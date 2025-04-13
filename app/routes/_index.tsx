@@ -1,10 +1,23 @@
 //index
 
-
 import type { MetaFunction } from "@remix-run/node";
 import { Form, useActionData, useNavigation } from "@remix-run/react";
 import type { ActionFunctionArgs } from "@remix-run/node";
 import ReactMarkdown from 'react-markdown';
+import {
+  Page,
+  LegacyCard,
+  FormLayout,
+  TextField,
+  Select,
+  Button,
+  Banner,
+  Text,
+  LegacyStack,
+  Frame,
+  Divider,
+  Badge
+} from '@shopify/polaris';
 
 export const meta: MetaFunction = () => {
   return [
@@ -46,112 +59,167 @@ export default function Index() {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
+  const modeOptions = [
+    { label: '🧵 Moodboard', value: 'moodboard' },
+    { label: '🏙 Store as a City', value: 'city' },
+    { label: '🎭 Magazine/Album Cover', value: 'cover' }
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Store Vibe Generator
-          </h1>
-          <p className="text-gray-600 mb-8">
+    <Frame>
+      <Page
+        title="Store Vibe Generator"
+        subtitle="Generate an AI-powered brand vibe from your Shopify store."
+        titleMetadata={
+          <Badge tone="info">Beta</Badge>
+        }
+      >
+        <LegacyCard sectioned>
+          <Text variant="bodyMd" as="p">
             Enter your Shopify store URL to generate a unique vibe — as a brand moodboard, a poetic cityscape, or a stylish magazine/album cover.
-          </p>
-        </div>
-
-        <Form method="post" className="space-y-6">
-          <div>
-            <label htmlFor="storeUrl" className="block text-sm font-medium text-gray-700">
-              Shopify Store URL
-            </label>
-            <div className="mt-1">
-              <input
-                type="url"
-                name="storeUrl"
-                id="storeUrl"
-                required
-                placeholder="https://your-store.myshopify.com"
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
+          </Text>
+          
+          <div style={{ marginTop: '20px' }}>
+            <Form method="post">
+              <FormLayout>
+                <div>
+                  <label htmlFor="storeUrl" style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 'medium', color: 'var(--p-text)' }}>
+                    Shopify Store URL <span style={{ color: 'var(--p-text-critical)' }}>*</span>
+                  </label>
+                  <input
+                    type="url"
+                    name="storeUrl"
+                    id="storeUrl"
+                    placeholder="https://your-store.myshopify.com"
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      border: '1px solid var(--p-border-subdued)',
+                      fontSize: '14px',
+                      backgroundColor: 'white',
+                      color: '#202223',
+                      outline: 'none'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.boxShadow = '0 0 0 2px #5c6ac4';
+                      e.target.style.borderColor = '#5c6ac4';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.boxShadow = 'none';
+                      e.target.style.borderColor = 'var(--p-border-subdued)';
+                    }}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="mode" style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 'medium', color: 'var(--p-text)' }}>
+                    Vibe Style
+                  </label>
+                  <select
+                    name="mode"
+                    id="mode"
+                    defaultValue="moodboard"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      border: '1px solid var(--p-border-subdued)',
+                      fontSize: '14px',
+                      backgroundColor: 'white',
+                      color: '#202223',
+                      outline: 'none'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.boxShadow = '0 0 0 2px #5c6ac4';
+                      e.target.style.borderColor = '#5c6ac4';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.boxShadow = 'none';
+                      e.target.style.borderColor = 'var(--p-border-subdued)';
+                    }}
+                  >
+                    <option value="moodboard">🧵 Moodboard</option>
+                    <option value="city">🏙 Store as a City</option>
+                    <option value="cover">🎭 Magazine/Album Cover</option>
+                  </select>
+                </div>
+                
+                <Button 
+                  variant="primary"
+                  submit
+                  disabled={isSubmitting}
+                  loading={isSubmitting}
+                >
+                  {isSubmitting ? "Generating..." : "Generate Store Vibe"}
+                </Button>
+              </FormLayout>
+            </Form>
           </div>
-
-          <div>
-            <label htmlFor="mode" className="block text-sm font-medium text-gray-700">
-              Vibe Style
-            </label>
-            <select
-              name="mode"
-              id="mode"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              defaultValue="moodboard"
-            >
-              <option value="moodboard">🧵 Moodboard</option>
-              <option value="city">🏙 Store as a City</option>
-              <option value="cover">🎭 Magazine/Album Cover</option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-          >
-            {isSubmitting ? "Generating..." : "Generate Store Vibe"}
-          </button>
-        </Form>
+        </LegacyCard>
 
         {actionData?.error && (
-          <div className="mt-8">
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <p className="text-red-700">{actionData.error}</p>
-            </div>
+          <div style={{ marginTop: '20px' }}>
+            <Banner tone="critical">
+              <p>{actionData.error}</p>
+            </Banner>
           </div>
         )}
 
         {actionData?.vibePrompt && !actionData.error && (
-          <div className="mt-8">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Your Store Vibe
-              </h2>
-
-              <p className="text-sm text-gray-500 mb-2 italic">
-                Style: {
-                  actionData.mode === "city" 
-                    ? "🏙 Store as a City" 
-                    : actionData.mode === "cover" 
-                      ? "🎭 Magazine/Album Cover" 
-                      : "🧵 Moodboard"
-                }
-              </p>
-
-              <div className="text-lg text-gray-700 mb-4 prose max-w-none">
-                <ReactMarkdown>{actionData.vibePrompt}</ReactMarkdown>
-              </div>
-
-              {actionData.imageUrl && (
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Generated Image</h3>
-                  <img
-                    src={actionData.imageUrl}
-                    alt="Generated store vibe visualization"
-                    className="w-full rounded-lg mb-4"
-                  />
+          <div style={{ marginTop: '20px' }}>
+            <LegacyCard sectioned>
+              <LegacyCard.Section title="Your Store Vibe">
+                <Badge tone="success" progress="complete">
+                  {
+                    actionData.mode === "city" 
+                      ? "🏙 Store as a City" 
+                      : actionData.mode === "cover" 
+                        ? "🎭 Magazine/Album Cover" 
+                        : "🧵 Moodboard"
+                  }
+                </Badge>
+                
+                <div style={{ margin: '16px 0', borderBottom: '1px solid var(--p-border-subdued)' }}></div>
+                
+                <div style={{ marginTop: '16px', marginBottom: '20px', lineHeight: '1.6' }}>
+                  <ReactMarkdown>{actionData.vibePrompt}</ReactMarkdown>
                 </div>
-              )}
 
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                }}
-                className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Share your store vibe
-              </button>
-            </div>
+                {actionData.imageUrl && (
+                  <LegacyStack vertical>
+                    <Text variant="headingMd" as="h3">Generated Image</Text>
+                    <div style={{ 
+                      border: '1px solid var(--p-border-subdued)',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      marginBottom: '16px'
+                    }}>
+                      <img
+                        src={actionData.imageUrl}
+                        alt="Generated store vibe visualization"
+                        style={{ width: '100%', display: 'block' }}
+                      />
+                    </div>
+                  </LegacyStack>
+                )}
+
+                <LegacyStack distribution="trailing">
+                  <Button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.href);
+                    }}
+                    variant="primary"
+                  >
+                    Share your store vibe
+                  </Button>
+                </LegacyStack>
+              </LegacyCard.Section>
+            </LegacyCard>
           </div>
         )}
-      </div>
-    </div>
+      </Page>
+    </Frame>
   );
 }

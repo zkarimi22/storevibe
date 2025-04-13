@@ -14,6 +14,7 @@
     "@remix-run/node": "^2.16.5",
     "@remix-run/react": "^2.16.5",
     "@remix-run/serve": "^2.16.5",
+    "@shopify/polaris": "^13.9.5",
     "@tailwindcss/typography": "^0.5.16",
     "dotenv": "^16.5.0",
     "isbot": "^4.1.0",
