@@ -1,3 +1,6 @@
+//ai.generate-vibe
+
+
 import { json } from "@remix-run/node";
 import type { ActionFunctionArgs } from "@remix-run/node";
 import puppeteer from "puppeteer";
@@ -26,10 +29,18 @@ async function captureStoreScreenshot(storeUrl: string): Promise<Buffer> {
 
 // Function to generate landscape prompt from screenshot using OpenAI
 async function generateVibePrompt(screenshot: Buffer, mode: string): Promise<string> {
-  const promptBase =
-    mode === "city"
-      ? `Imagine this store as a physical city. Describe the atmosphere, architecture, and the kind of people you'd see there. Be poetic but vivid. End the description with a dominant hex color.`
-      : `Describe this store as a visual brand moodboard. Include design elements like color palette, texture, tone, and shopper archetype. End with a dominant hex color.`
+  let promptBase;
+  
+  switch (mode) {
+    case "city":
+      promptBase = `Imagine this store as a physical city. Describe the atmosphere, architecture, and the kind of people you'd see there. Be poetic but vivid. End the description with a dominant hex color.`;
+      break;
+    case "cover":
+      promptBase = `Imagine this store had a magazine cover or album artwork. Describe the visual style, typography, imagery, and overall aesthetic it would have. Include what genre of magazine or music it would be. End with a dominant hex color.`;
+      break;
+    default: // moodboard
+      promptBase = `Describe this store as a visual brand moodboard. Include design elements like color palette, texture, tone, and shopper archetype. End with a dominant hex color.`;
+  }
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -56,10 +67,18 @@ async function generateVibePrompt(screenshot: Buffer, mode: string): Promise<str
 
 // Function to generate image using DALL-E 3
 async function generateImage(vibePrompt: string, mode: string): Promise<string> {
-  const dallEPrompt =
-    mode === "city"
-      ? `Create a visual representation of a city based on this description: ${vibePrompt}`
-      : `Generate a stylized brand mood board image based on this description: ${vibePrompt}`;
+  let dallEPrompt;
+  
+  switch (mode) {
+    case "city":
+      dallEPrompt = `Create a visual representation of a city based on this description: ${vibePrompt}`;
+      break;
+    case "cover":
+      dallEPrompt = `Create a stylish magazine cover or album artwork based on this description: ${vibePrompt}`;
+      break;
+    default: // moodboard
+      dallEPrompt = `Generate a stylized brand mood board image based on this description: ${vibePrompt}`;
+  }
 
   const response = await openai.images.generate({
     model: "dall-e-3",
