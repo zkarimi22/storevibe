@@ -96,7 +96,7 @@ export default function ExploreVibes() {
 
   const handleShareLink = useCallback(() => {
     if (!selectedVibe) return;
-    const shareUrl = `${window.location.origin}/explore/${selectedVibe._id}`;
+    const shareUrl = `${window.location.origin}/vibe/${selectedVibe._id}`;
     navigator.clipboard.writeText(shareUrl);
     setToastMessage('Link copied to clipboard!');
     setShowToast(true);
@@ -105,19 +105,19 @@ export default function ExploreVibes() {
   const handleShareTwitter = useCallback(() => {
     if (!selectedVibe) return;
     const text = `Check out this ${selectedVibe.mode} vibe for ${selectedVibe.storeUrl} created by Store Vibe Generator!`;
-    const url = encodeURIComponent(`${window.location.origin}/explore/${selectedVibe._id}`);
+    const url = encodeURIComponent(`${window.location.origin}/vibe/${selectedVibe._id}`);
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`, '_blank');
   }, [selectedVibe]);
 
   const handleShareFacebook = useCallback(() => {
     if (!selectedVibe) return;
-    const url = encodeURIComponent(`${window.location.origin}/explore/${selectedVibe._id}`);
+    const url = encodeURIComponent(`${window.location.origin}/vibe/${selectedVibe._id}`);
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
   }, [selectedVibe]);
 
   const handleSharePinterest = useCallback(() => {
     if (!selectedVibe) return;
-    const url = encodeURIComponent(`${window.location.origin}/explore/${selectedVibe._id}`);
+    const url = encodeURIComponent(`${window.location.origin}/vibe/${selectedVibe._id}`);
     const media = encodeURIComponent(selectedVibe.imageUrl);
     const description = encodeURIComponent(`${selectedVibe.mode} vibe for ${selectedVibe.storeUrl}`);
     window.open(`https://pinterest.com/pin/create/button/?url=${url}&media=${media}&description=${description}`, '_blank');
@@ -130,7 +130,7 @@ export default function ExploreVibes() {
       `Check out this store vibe I found:\n\n` +
       `Store: ${selectedVibe.storeUrl}\n` +
       `Type: ${selectedVibe.mode}\n\n` +
-      `${window.location.origin}/explore/${selectedVibe._id}`
+      `${window.location.origin}/vibe/${selectedVibe._id}`
     );
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
   }, [selectedVibe]);
@@ -229,6 +229,11 @@ export default function ExploreVibes() {
                   <Button onClick={handleCloseModal}>Close</Button>
                   <Button 
                     variant="primary"
+                    url={`/vibe/${selectedVibe._id}`}
+                  >
+                    View Permanent Page
+                  </Button>
+                  <Button 
                     onClick={() => window.open(selectedVibe.imageUrl, '_blank')}
                   >
                     View Full Image
@@ -274,9 +279,7 @@ export default function ExploreVibes() {
                     border: '1px solid var(--p-border-subdued)',
                     background: 'white',
                     transition: 'transform 0.2s, box-shadow 0.2s',
-                    cursor: 'pointer'
                   }}
-                  onClick={() => handleVibeClick(vibe)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-4px)';
                     e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.1)';
@@ -286,7 +289,10 @@ export default function ExploreVibes() {
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  <div style={{ height: '200px', overflow: 'hidden' }}>
+                  <div 
+                    style={{ height: '200px', overflow: 'hidden', cursor: 'pointer' }}
+                    onClick={() => handleVibeClick(vibe)}
+                  >
                     <img
                       src={vibe.imageUrl}
                       alt={`Vibe for ${vibe.storeUrl}`}
@@ -306,13 +312,24 @@ export default function ExploreVibes() {
                       </Badge>
                       <span style={{ color: 'var(--p-text-subdued)', fontSize: '12px' }}>{vibe.storeUrl}</span>
                     </div>
-                    <div style={{ maxHeight: '80px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div 
+                      style={{ maxHeight: '60px', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '12px', cursor: 'pointer' }}
+                      onClick={() => handleVibeClick(vibe)}
+                    >
                       <Text variant="bodyMd" as="p">
                         {vibe.vibePrompt.substring(0, 120)}...
                       </Text>
                     </div>
-                    <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--p-text-subdued)' }}>
-                      {new Date(vibe.createdAt).toLocaleDateString()}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--p-text-subdued)' }}>
+                        {new Date(vibe.createdAt).toLocaleDateString()}
+                      </div>
+                      <Button
+                        size="slim"
+                        url={`/vibe/${vibe._id}`}
+                      >
+                        View Details
+                      </Button>
                     </div>
                   </div>
                 </div>

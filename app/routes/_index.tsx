@@ -106,7 +106,8 @@ export async function action({ request }: ActionFunctionArgs) {
       throw new Error("Failed to generate store vibe");
     }
 
-    return await response.json();
+    const data = await response.json();
+    return data; // This now includes the dbId from the API
   } catch (error) {
     console.error("Error:", error);
     return { error: "Failed to generate store vibe" };
@@ -125,26 +126,41 @@ export default function Index() {
   const togglePopoverActive = () => setPopoverActive(!popoverActive);
   
   const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(window.location.href);
+    // If we have a dbId, use the vibe/:id URL for sharing
+    const shareUrl = actionData?.dbId 
+      ? `${window.location.origin}/vibe/${actionData.dbId}`
+      : window.location.href;
+      
+    navigator.clipboard.writeText(shareUrl);
     setToastMessage("Link copied to clipboard!");
     setShowToast(true);
     setPopoverActive(false);
   };
 
   const handleShareOnTwitter = () => {
+    // If we have a dbId, use the vibe/:id URL for sharing
+    const shareUrl = actionData?.dbId 
+      ? `${window.location.origin}/vibe/${actionData.dbId}`
+      : window.location.href;
+      
     const text = actionData?.mode === "city" 
       ? "Check out this AI-generated cityscape of my store!" 
       : actionData?.mode === "cover" 
         ? "Check out this AI-generated magazine cover for my store!" 
         : "Check out this AI-generated moodboard for my store!";
     
-    const url = encodeURIComponent(window.location.href);
+    const url = encodeURIComponent(shareUrl);
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`, '_blank');
     setPopoverActive(false);
   };
 
   const handleShareOnFacebook = () => {
-    const url = encodeURIComponent(window.location.href);
+    // If we have a dbId, use the vibe/:id URL for sharing
+    const shareUrl = actionData?.dbId 
+      ? `${window.location.origin}/vibe/${actionData.dbId}`
+      : window.location.href;
+      
+    const url = encodeURIComponent(shareUrl);
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
     setPopoverActive(false);
   };
@@ -182,6 +198,11 @@ export default function Index() {
         titleMetadata={
           <Badge tone="info">Beta</Badge>
         }
+        primaryAction={{
+          content: "Explore All Vibes",
+          url: "/explore",
+          accessibilityLabel: "Explore all generated vibes"
+        }}
       >
         
 
@@ -317,45 +338,55 @@ export default function Index() {
                 )}
 
                 <LegacyStack distribution="trailing">
-                  <div>
-                    <Popover
-                      active={popoverActive}
-                      activator={
-                        <Button
-                          onClick={togglePopoverActive}
-                          variant="primary"
-                        >
-                          Share this vibe 🚀
-                        </Button>
-                      }
-                      onClose={togglePopoverActive}
-                    >
-                      <ActionList
-                        actionRole="menuitem"
-                        items={[
-                          {
-                            content: 'Copy link',
-                            onAction: handleCopyToClipboard,
-                          },
-                          {
-                            content: 'Share on X',
-                            onAction: handleShareOnTwitter,
-                          },
-                          {
-                            content: 'Share on Facebook',
-                            onAction: handleShareOnFacebook,
-                          },
-                          ...(actionData?.imageUrl ? [{
-                            content: 'Download image',
-                            onAction: handleDownloadImage,
-                          }] : []),
-                        ]}
-                      />
-                    </Popover>
-                    {showToast && (
-                      <Toast content={toastMessage} onDismiss={() => setShowToast(false)} />
+                  <ButtonGroup>
+                    {actionData.dbId && (
+                      <Button
+                        url={`/vibe/${actionData.dbId}`}
+                        variant="secondary"
+                      >
+                        View Permanent Page
+                      </Button>
                     )}
-                  </div>
+                    <div>
+                      <Popover
+                        active={popoverActive}
+                        activator={
+                          <Button
+                            onClick={togglePopoverActive}
+                            variant="primary"
+                          >
+                            Share this vibe 🚀
+                          </Button>
+                        }
+                        onClose={togglePopoverActive}
+                      >
+                        <ActionList
+                          actionRole="menuitem"
+                          items={[
+                            {
+                              content: 'Copy link',
+                              onAction: handleCopyToClipboard,
+                            },
+                            {
+                              content: 'Share on X',
+                              onAction: handleShareOnTwitter,
+                            },
+                            {
+                              content: 'Share on Facebook',
+                              onAction: handleShareOnFacebook,
+                            },
+                            ...(actionData?.imageUrl ? [{
+                              content: 'Download image',
+                              onAction: handleDownloadImage,
+                            }] : []),
+                          ]}
+                        />
+                      </Popover>
+                      {showToast && (
+                        <Toast content={toastMessage} onDismiss={() => setShowToast(false)} />
+                      )}
+                    </div>
+                  </ButtonGroup>
                 </LegacyStack>
               </LegacyCard.Section>
             </LegacyCard>
@@ -365,14 +396,22 @@ export default function Index() {
          {/* Showcase Slider */}
         {showShowcase && (
           <div style={{  marginBottom: '40px', paddingTop: '20px', backgroundColor: 'var(--p-surface-subdued)', borderRadius: '8px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '0 16px' }}>
               <Text variant="headingMd" as="h2">Explore Generated Vibes</Text>
-              <Button
-                variant="plain"
-                onClick={() => setShowShowcase(false)}
-              >
-                Hide examples
-              </Button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Button
+                  variant="plain"
+                  onClick={() => setShowShowcase(false)}
+                >
+                  Hide examples
+                </Button>
+                <Button
+                  url="/explore"
+                  variant="plain"
+                >
+                  See all →
+                </Button>
+              </div>
             </div>
             <Scrollable style={{ height: 'auto' }} horizontal>
               <div style={{ 
