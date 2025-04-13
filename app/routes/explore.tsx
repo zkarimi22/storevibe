@@ -14,6 +14,7 @@ import {
   Modal
 } from '@shopify/polaris';
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 type VibeResult = {
   _id: string;
@@ -110,7 +111,7 @@ export default function ExploreVibes() {
             title={
               <>
                 <span className="modal-title">{selectedVibe.storeUrl}</span>
-                <Badge tone="success" progress="complete" style={{ marginLeft: '8px' }}>
+                <Badge tone="success" progress="complete">
                   {
                     selectedVibe.mode === "city" 
                       ? "🏙 Store as a City" 
@@ -121,7 +122,7 @@ export default function ExploreVibes() {
                 </Badge>
               </>
             }
-            large
+            size="large"
           >
             <Modal.Section>
               <div style={{ maxWidth: '100%', margin: '0 auto' }}>
@@ -147,14 +148,14 @@ export default function ExploreVibes() {
                 <div style={{ 
                   maxHeight: '30vh', 
                   overflowY: 'auto', 
-                  padding: '8px', 
+                  padding: '16px', 
                   borderRadius: '4px',
                   backgroundColor: 'var(--p-surface-subdued)',
                   marginBottom: '16px'
                 }}>
-                  <Text variant="bodyMd" as="p" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
-                    {selectedVibe.vibePrompt}
-                  </Text>
+                  <div className="markdown-content" style={{ lineHeight: '1.6' }}>
+                    <ReactMarkdown>{selectedVibe.vibePrompt}</ReactMarkdown>
+                  </div>
                 </div>
                 <div style={{ fontSize: '12px', color: 'var(--p-text-subdued)', marginBottom: '8px' }}>
                   Generated on {new Date(selectedVibe.createdAt).toLocaleDateString()} at {new Date(selectedVibe.createdAt).toLocaleTimeString()}
@@ -162,7 +163,7 @@ export default function ExploreVibes() {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                   <Button onClick={handleCloseModal}>Close</Button>
                   <Button 
-                    primary 
+                    variant="primary"
                     onClick={() => window.open(selectedVibe.imageUrl, '_blank')}
                   >
                     View Full Image
