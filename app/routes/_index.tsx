@@ -1,4 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
+import { Form, useActionData, useNavigation } from "@remix-run/react";
+import type { ActionFunctionArgs } from "@remix-run/node";
 
 export const meta: MetaFunction = () => {
   return [
@@ -7,47 +9,104 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const storeUrl = formData.get("storeUrl") as string;
+
+  try {
+    const response = await fetch("/api.vibe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ storeUrl }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to generate store vibe");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error:", error);
+    return { error: "Failed to generate store vibe" };
+  }
+}
+
 export default function Index() {
+  const actionData = useActionData<typeof action>();
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === "submitting";
+
   return (
-    <div className="flex h-screen items-center justify-center">
-      <div className="flex flex-col items-center gap-16">
-        <header className="flex flex-col items-center gap-9">
-          <h1 className="leading text-2xl font-bold text-gray-800 dark:text-gray-100">
-            Welcome to <span className="sr-only">Remix</span>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md mx-auto">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Store Vibe Generator
           </h1>
-          <div className="h-[144px] w-[434px]">
-            <img
-              src="/logo-light.png"
-              alt="Remix"
-              className="block w-full dark:hidden"
-            />
-            <img
-              src="/logo-dark.png"
-              alt="Remix"
-              className="hidden w-full dark:block"
-            />
-          </div>
-        </header>
-        <nav className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-gray-200 p-6 dark:border-gray-700">
-          <p className="leading-6 text-gray-700 dark:text-gray-200">
-            What&apos;s next?
+          <p className="text-gray-600 mb-8">
+            Enter your Shopify store URL to generate a unique vibe and visual representation
           </p>
-          <ul>
-            {resources.map(({ href, text, icon }) => (
-              <li key={href}>
-                <a
-                  className="group flex items-center gap-3 self-stretch p-3 leading-normal text-blue-700 hover:underline dark:text-blue-500"
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {icon}
-                  {text}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        </div>
+
+        <Form method="post" className="space-y-6">
+          <div>
+            <label htmlFor="storeUrl" className="block text-sm font-medium text-gray-700">
+              Shopify Store URL
+            </label>
+            <div className="mt-1">
+              <input
+                type="url"
+                name="storeUrl"
+                id="storeUrl"
+                required
+                placeholder="https://your-store.myshopify.com"
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+          >
+            {isSubmitting ? "Generating..." : "Generate Store Vibe"}
+          </button>
+        </Form>
+
+        {actionData?.error && (
+          <div className="mt-8">
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <p className="text-red-700">{actionData.error}</p>
+            </div>
+          </div>
+        )}
+
+        {actionData?.vibe && !actionData.error && (
+          <div className="mt-8">
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Your Store Vibe
+              </h2>
+              <p className="text-lg text-gray-700 mb-4">{actionData.vibe}</p>
+              <img
+                src={actionData.imageUrl}
+                alt="Store vibe visualization"
+                className="w-full rounded-lg mb-4"
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                }}
+                className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Share your store vibe
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
