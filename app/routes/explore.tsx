@@ -11,9 +11,11 @@ import {
   Pagination,
   Select,
   Button,
-  Modal
+  Modal,
+  ButtonGroup,
+  Toast
 } from '@shopify/polaris';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 type VibeResult = {
@@ -64,6 +66,8 @@ export default function ExploreVibes() {
   const currentMode = searchParams.get('mode') || '';
   const currentPage = parseInt(searchParams.get('page') || '1');
   const [selectedVibe, setSelectedVibe] = useState<VibeResult | null>(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   const handleModeChange = (value: string) => {
     const params = new URLSearchParams(searchParams);
@@ -90,6 +94,47 @@ export default function ExploreVibes() {
     setSelectedVibe(null);
   };
 
+  const handleShareLink = useCallback(() => {
+    if (!selectedVibe) return;
+    const shareUrl = `${window.location.origin}/explore/${selectedVibe._id}`;
+    navigator.clipboard.writeText(shareUrl);
+    setToastMessage('Link copied to clipboard!');
+    setShowToast(true);
+  }, [selectedVibe]);
+
+  const handleShareTwitter = useCallback(() => {
+    if (!selectedVibe) return;
+    const text = `Check out this ${selectedVibe.mode} vibe for ${selectedVibe.storeUrl} created by Store Vibe Generator!`;
+    const url = encodeURIComponent(`${window.location.origin}/explore/${selectedVibe._id}`);
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`, '_blank');
+  }, [selectedVibe]);
+
+  const handleShareFacebook = useCallback(() => {
+    if (!selectedVibe) return;
+    const url = encodeURIComponent(`${window.location.origin}/explore/${selectedVibe._id}`);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+  }, [selectedVibe]);
+
+  const handleSharePinterest = useCallback(() => {
+    if (!selectedVibe) return;
+    const url = encodeURIComponent(`${window.location.origin}/explore/${selectedVibe._id}`);
+    const media = encodeURIComponent(selectedVibe.imageUrl);
+    const description = encodeURIComponent(`${selectedVibe.mode} vibe for ${selectedVibe.storeUrl}`);
+    window.open(`https://pinterest.com/pin/create/button/?url=${url}&media=${media}&description=${description}`, '_blank');
+  }, [selectedVibe]);
+
+  const handleShareEmail = useCallback(() => {
+    if (!selectedVibe) return;
+    const subject = encodeURIComponent(`Store Vibe Generator: ${selectedVibe.storeUrl} ${selectedVibe.mode}`);
+    const body = encodeURIComponent(
+      `Check out this store vibe I found:\n\n` +
+      `Store: ${selectedVibe.storeUrl}\n` +
+      `Type: ${selectedVibe.mode}\n\n` +
+      `${window.location.origin}/explore/${selectedVibe._id}`
+    );
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+  }, [selectedVibe]);
+
   const modeOptions = [
     { label: 'All Vibes', value: '' },
     { label: '🧵 Moodboard', value: 'moodboard' },
@@ -103,6 +148,11 @@ export default function ExploreVibes() {
         title="Explore Store Vibes"
         subtitle="Discover AI-generated brand vibes for various Shopify stores"
       >
+        {/* Toast notification */}
+        {showToast && (
+          <Toast content={toastMessage} onDismiss={() => setShowToast(false)} />
+        )}
+        
         {/* Modal for viewing full vibe */}
         {selectedVibe && (
           <Modal
@@ -157,6 +207,21 @@ export default function ExploreVibes() {
                     <ReactMarkdown>{selectedVibe.vibePrompt}</ReactMarkdown>
                   </div>
                 </div>
+
+                {/* Share section */}
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ marginBottom: '8px' }}>
+                    <Text variant="headingSm" as="h3">Share this vibe</Text>
+                  </div>
+                  <ButtonGroup>
+                    <Button onClick={handleShareLink}>Copy Link</Button>
+                    <Button onClick={handleShareTwitter}>X</Button>
+                    <Button onClick={handleShareFacebook}>Facebook</Button>
+                    <Button onClick={handleSharePinterest}>Pinterest</Button>
+                    <Button onClick={handleShareEmail}>Email</Button>
+                  </ButtonGroup>
+                </div>
+
                 <div style={{ fontSize: '12px', color: 'var(--p-text-subdued)', marginBottom: '8px' }}>
                   Generated on {new Date(selectedVibe.createdAt).toLocaleDateString()} at {new Date(selectedVibe.createdAt).toLocaleTimeString()}
                 </div>
