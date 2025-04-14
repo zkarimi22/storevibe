@@ -111,7 +111,11 @@ export default function ExploreVibes() {
   const handleShareTwitter = useCallback(() => {
     if (!selectedVibe) return;
     
-    const text = `Check out this ${selectedVibe.mode} vibe for ${selectedVibe.storeUrl} created by Store Vibe Generator!`;
+    const text = selectedVibe.mode === "city" 
+      ? `Check out this AI-generated cityscape for our #shopify store!` 
+      : selectedVibe.mode === "cover" 
+        ? `Check out this AI-generated magazine cover for our #shopify store!` 
+        : `Check out this AI-generated moodboard for our #shopify store!`;
     
     // Use SEO ID if available, otherwise use MongoDB ID
     const shareUrl = selectedVibe.seoId

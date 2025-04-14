@@ -64,14 +64,22 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { name: "keywords", content: `Shopify, AI, ${vibe.mode}, store vibe, ecommerce, brand identity, ${vibe.storeUrl}` },
     // Open Graph / Facebook
     { property: "og:type", content: "website" },
+    { property: "og:url", content: vibe.seoId 
+      ? `${process.env.PUBLIC_URL || 'https://storevibe.com'}/v/${vibe.seoId}`
+      : `${process.env.PUBLIC_URL || 'https://storevibe.com'}/vibe/${vibe._id}` },
     { property: "og:title", content: `${mode} for ${vibe.storeUrl} | Store Vibe Generator` },
     { property: "og:description", content: vibe.vibePrompt.substring(0, 160) },
     { property: "og:image", content: vibe.imageUrl },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
     // Twitter
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: `${mode} for ${vibe.storeUrl} | Store Vibe Generator` },
     { name: "twitter:description", content: vibe.vibePrompt.substring(0, 160) },
     { name: "twitter:image", content: vibe.imageUrl },
+    // Additional meta tags for better sharing
+    { property: "og:site_name", content: "Store Vibe Generator" },
+    { property: "og:ttl", content: "2419200" }, // 28 days cache for Facebook
   ];
 };
 
@@ -135,10 +143,10 @@ export default function VibeDetail() {
     if (!vibe) return;
     
     const text = vibe.mode === "city" 
-      ? `Check out this AI-generated cityscape of ${vibe.storeUrl}!` 
+      ? `Check out this AI-generated cityscape for our #shopify store!` 
       : vibe.mode === "cover" 
-        ? `Check out this AI-generated magazine cover for ${vibe.storeUrl}!` 
-        : `Check out this AI-generated moodboard for ${vibe.storeUrl}!`;
+        ? `Check out this AI-generated magazine cover for our #shopify store!` 
+        : `Check out this AI-generated moodboard for our #shopify store!`;
     
     // Use SEO ID if available, otherwise use MongoDB ID
     const shareUrl = vibe.seoId
