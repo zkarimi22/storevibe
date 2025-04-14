@@ -417,7 +417,7 @@ export default function Index() {
                     <select
                       name="mode"
                       id="mode"
-                      defaultValue="cover"
+                      defaultValue="moodboard"
                       style={{
                         width: '100%',
                         padding: '8px 12px',
