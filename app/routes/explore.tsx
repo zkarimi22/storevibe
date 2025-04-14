@@ -98,9 +98,9 @@ export default function ExploreVibes() {
   const handleShareLink = useCallback(() => {
     if (!selectedVibe) return;
     
-    // Use SEO ID if available, otherwise use MongoDB ID
+    // Use SEO ID for sharing
     const shareUrl = selectedVibe.seoId
-      ? `${window.location.origin}/v/${selectedVibe.seoId}`
+      ? `${window.location.origin}/vibe/${selectedVibe.seoId}`
       : `${window.location.origin}/vibe/${selectedVibe._id}`;
       
     navigator.clipboard.writeText(shareUrl);
@@ -117,9 +117,9 @@ export default function ExploreVibes() {
         ? `Check out this AI-generated magazine cover for our #shopify store!` 
         : `Check out this AI-generated moodboard for our #shopify store!`;
     
-    // Use SEO ID if available, otherwise use MongoDB ID
+    // Use SEO ID for sharing
     const shareUrl = selectedVibe.seoId
-      ? `${window.location.origin}/v/${selectedVibe.seoId}`
+      ? `${window.location.origin}/vibe/${selectedVibe.seoId}`
       : `${window.location.origin}/vibe/${selectedVibe._id}`;
       
     const url = encodeURIComponent(shareUrl);
@@ -129,9 +129,9 @@ export default function ExploreVibes() {
   const handleShareFacebook = useCallback(() => {
     if (!selectedVibe) return;
     
-    // Use SEO ID if available, otherwise use MongoDB ID
+    // Use SEO ID for sharing
     const shareUrl = selectedVibe.seoId
-      ? `${window.location.origin}/v/${selectedVibe.seoId}`
+      ? `${window.location.origin}/vibe/${selectedVibe.seoId}`
       : `${window.location.origin}/vibe/${selectedVibe._id}`;
       
     const url = encodeURIComponent(shareUrl);
@@ -141,9 +141,9 @@ export default function ExploreVibes() {
   const handleSharePinterest = useCallback(() => {
     if (!selectedVibe) return;
     
-    // Use SEO ID if available, otherwise use MongoDB ID
+    // Use SEO ID for sharing
     const shareUrl = selectedVibe.seoId
-      ? `${window.location.origin}/v/${selectedVibe.seoId}`
+      ? `${window.location.origin}/vibe/${selectedVibe.seoId}`
       : `${window.location.origin}/vibe/${selectedVibe._id}`;
       
     const encodedUrl = encodeURIComponent(shareUrl);
@@ -155,9 +155,9 @@ export default function ExploreVibes() {
   const handleShareEmail = useCallback(() => {
     if (!selectedVibe) return;
     
-    // Use SEO ID if available, otherwise use MongoDB ID
+    // Use SEO ID for sharing
     const shareUrl = selectedVibe.seoId
-      ? `${window.location.origin}/v/${selectedVibe.seoId}`
+      ? `${window.location.origin}/vibe/${selectedVibe.seoId}`
       : `${window.location.origin}/vibe/${selectedVibe._id}`;
       
     const subject = encodeURIComponent(`Store Vibe Generator: ${selectedVibe.storeUrl} ${selectedVibe.mode}`);
@@ -265,7 +265,7 @@ export default function ExploreVibes() {
                   <Button 
                     variant="primary"
                     url={selectedVibe.seoId 
-                      ? `/v/${selectedVibe.seoId}` 
+                      ? `/vibe/${selectedVibe.seoId}` 
                       : `/vibe/${selectedVibe._id}`}
                   >
                     View Permanent Page
@@ -364,7 +364,7 @@ export default function ExploreVibes() {
                       <Button
                         size="slim"
                         url={vibe.seoId 
-                          ? `/v/${vibe.seoId}` 
+                          ? `/vibe/${vibe.seoId}` 
                           : `/vibe/${vibe._id}`}
                       >
                         View Details

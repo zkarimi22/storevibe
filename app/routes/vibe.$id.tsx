@@ -1,7 +1,6 @@
 import { json } from "@remix-run/node";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
-import { ObjectId } from 'mongodb';
 import ReactMarkdown from 'react-markdown';
 import {
   Page,
@@ -20,6 +19,7 @@ import {
 } from '@shopify/polaris';
 import { useState } from 'react';
 import { connectToDatabase } from '~/utils/db.server';
+import { isValidSeoId } from '~/utils/seo-utils';
 
 // Define TypeScript interfaces for our data
 interface VibeData {
@@ -30,7 +30,7 @@ interface VibeData {
   imageUrl: string;
   createdAt: string;
   isPublic: boolean;
-  seoId?: string;
+  seoId: string;
 }
 
 interface LoaderData {
@@ -56,54 +56,77 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     : vibe.mode === "cover" 
       ? "Magazine/Album Cover"
       : "Moodboard";
+      
+  // Ensure the image URL is absolute (Twitter requires this)
+  const imageUrl = vibe.imageUrl.startsWith('http') ? vibe.imageUrl : `https://storevibe.zkarimi.com${vibe.imageUrl}`;
+  
+  // Create canonical URL
+  const canonicalUrl = `${process.env.PUBLIC_URL || 'https://storevibe.zkarimi.com'}/vibe/${vibe.seoId}`;
 
   return [
     { title: `${mode} for ${vibe.storeUrl} | Store Vibe Generator` },
     { name: "description", content: vibe.vibePrompt.substring(0, 160) },
     // Primary Meta Tags
     { name: "keywords", content: `Shopify, AI, ${vibe.mode}, store vibe, ecommerce, brand identity, ${vibe.storeUrl}` },
-    // Open Graph / Facebook
-    { property: "og:type", content: "website" },
-    { property: "og:url", content: vibe.seoId 
-      ? `${process.env.PUBLIC_URL || 'https://storevibe.com'}/v/${vibe.seoId}`
-      : `${process.env.PUBLIC_URL || 'https://storevibe.com'}/vibe/${vibe._id}` },
-    { property: "og:title", content: `${mode} for ${vibe.storeUrl} | Store Vibe Generator` },
-    { property: "og:description", content: vibe.vibePrompt.substring(0, 160) },
-    { property: "og:image", content: vibe.imageUrl },
-    { property: "og:image:width", content: "1200" },
-    { property: "og:image:height", content: "630" },
-    // Twitter
+    
+    // Twitter - IMPORTANT: Twitter-specific tags must come BEFORE Open Graph tags
     { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:site", content: "@storevibe" },
+    { name: "twitter:creator", content: "@storevibe" },
     { name: "twitter:title", content: `${mode} for ${vibe.storeUrl} | Store Vibe Generator` },
     { name: "twitter:description", content: vibe.vibePrompt.substring(0, 160) },
-    { name: "twitter:image", content: vibe.imageUrl },
-    // Additional meta tags for better sharing
+    { name: "twitter:image", content: imageUrl },
+    { name: "twitter:image:alt", content: `AI-generated ${mode.toLowerCase()} for ${vibe.storeUrl}` },
+    { name: "twitter:domain", content: "storevibe.zkarimi.com" },
+    
+    // Open Graph / Facebook - Must come AFTER Twitter tags
+    { property: "og:type", content: "website" },
+    { property: "og:url", content: canonicalUrl },
+    { property: "og:title", content: `${mode} for ${vibe.storeUrl} | Store Vibe Generator` },
+    { property: "og:description", content: vibe.vibePrompt.substring(0, 160) },
+    { property: "og:image", content: imageUrl },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
+    { property: "og:image:alt", content: `AI-generated ${mode.toLowerCase()} for ${vibe.storeUrl}` },
     { property: "og:site_name", content: "Store Vibe Generator" },
     { property: "og:ttl", content: "2419200" }, // 28 days cache for Facebook
+    
+    // Canonical URL
+    { tagName: "link", rel: "canonical", href: canonicalUrl }
   ];
 };
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ params, request }: LoaderFunctionArgs) {
   try {
-    const id = params.id;
+    const { id: seoId } = params;
     
-    if (!id || !ObjectId.isValid(id)) {
-      return json({ error: "Invalid ID format", vibe: null, relatedVibes: [] }, { status: 400 });
+    if (!seoId || !isValidSeoId(seoId)) {
+      return json({ error: "Invalid SEO ID format", vibe: null, relatedVibes: [] }, { status: 400 });
     }
     
     const { db } = await connectToDatabase();
     const collection = db.collection("vibeResults");
     
-    const vibe = await collection.findOne({ _id: new ObjectId(id) });
+    // Find the vibe using the SEO ID
+    const vibe = await collection.findOne({ seoId });
     
     if (!vibe) {
       return json({ error: "Vibe not found", vibe: null, relatedVibes: [] }, { status: 404 });
     }
     
+    // Check if the request is from a social media crawler/bot
+    const userAgent = request.headers.get('user-agent') || '';
+    const isSocialCrawler = /facebookexternalhit|Twitterbot|Pinterest|LinkedInBot|WhatsApp|Slackbot|TelegramBot|Discordbot|Snapchat|Instagram|vkShare|W3C_Validator|redditbot|Applebot/i.test(userAgent);
+    
+    // Log detected social crawler for debugging
+    if (isSocialCrawler) {
+      console.log(`Social media crawler detected: ${userAgent}`);
+    }
+    
     // Fetch related vibes of the same mode, excluding the current one
     const relatedVibes = await collection.find({
       mode: vibe.mode,
-      _id: { $ne: new ObjectId(id) },
+      seoId: { $ne: seoId },
       isPublic: true
     })
     .sort({ createdAt: -1 })
@@ -128,10 +151,7 @@ export default function VibeDetail() {
   const handleCopyToClipboard = () => {
     if (!vibe) return;
     
-    // Use SEO ID if available, otherwise use MongoDB ID
-    const shareUrl = vibe.seoId
-      ? `${window.location.origin}/v/${vibe.seoId}`
-      : window.location.href;
+    const shareUrl = `${window.location.origin}/vibe/${vibe.seoId}`;
       
     navigator.clipboard.writeText(shareUrl);
     setToastMessage("Link copied to clipboard!");
@@ -148,10 +168,7 @@ export default function VibeDetail() {
         ? `Check out this AI-generated magazine cover for our #shopify store!` 
         : `Check out this AI-generated moodboard for our #shopify store!`;
     
-    // Use SEO ID if available, otherwise use MongoDB ID
-    const shareUrl = vibe.seoId
-      ? `${window.location.origin}/v/${vibe.seoId}`
-      : window.location.href;
+    const shareUrl = `${window.location.origin}/vibe/${vibe.seoId}`;
     
     const url = encodeURIComponent(shareUrl);
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`, '_blank');
@@ -161,10 +178,7 @@ export default function VibeDetail() {
   const handleShareOnFacebook = () => {
     if (!vibe) return;
     
-    // Use SEO ID if available, otherwise use MongoDB ID
-    const shareUrl = vibe.seoId
-      ? `${window.location.origin}/v/${vibe.seoId}`
-      : window.location.href;
+    const shareUrl = `${window.location.origin}/vibe/${vibe.seoId}`;
       
     const url = encodeURIComponent(shareUrl);
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
@@ -311,7 +325,7 @@ export default function VibeDetail() {
                     {relatedVibes.map((relatedVibe) => (
                       <Link 
                         key={relatedVibe._id.toString()} 
-                        to={`/vibe/${relatedVibe._id.toString()}`}
+                        to={`/vibe/${relatedVibe.seoId}`}
                         style={{ textDecoration: 'none', color: 'inherit' }}
                       >
                         <div 
