@@ -6,6 +6,10 @@ StoreVibe is an AI-powered web app that transforms Shopify stores into visual re
 - 🏙 **Cityscapes**: Poetic city visualizations representing the store's atmosphere and vibe
 - 🎭 **Magazine/Album Covers**: Stylized magazine or album cover designs matching the store's aesthetic
 
+## Demo
+
+https://storevibe.zkarimi.com/
+
 ## Features
 
 - AI-powered analysis of Shopify stores
