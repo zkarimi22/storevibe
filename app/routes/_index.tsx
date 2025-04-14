@@ -1,7 +1,8 @@
 //index
 
-import type { MetaFunction } from "@remix-run/node";
-import { Form, useActionData, useNavigation } from "@remix-run/react";
+import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import { Form, useActionData, useNavigation, useLoaderData } from "@remix-run/react";
 import type { ActionFunctionArgs } from "@remix-run/node";
 import ReactMarkdown from 'react-markdown';
 import {
@@ -25,38 +26,30 @@ import {
 } from '@shopify/polaris';
 import { useState, useEffect } from 'react';
 import React from 'react';
+import { connectToDatabase } from '~/utils/db.server';
+import { Link } from '@remix-run/react';
 
-// Sample showcase items - in a real app, these would come from a database or API
-const showcaseItems = [
-  {
-    id: '1',
-    mode: 'moodboard',
-    storeUrl: 'allbirds.com',
-    vibePrompt: 'Sustainable, earthy, and minimal with soft textures and natural tones. The color palette features muted greens, beiges, and sky blues. Appeals to eco-conscious millennials seeking comfort with purpose. #E5E5E0',
-    imageUrl: 'https://picsum.photos/id/27/800/600'
-  },
-  {
-    id: '2',
-    mode: 'city',
-    storeUrl: 'glossier.com',
-    vibePrompt: 'A clean, pastel-colored district where glass buildings reflect soft pink skies. Wide promenades lined with minimalist boutiques. Young professionals stroll with confidence between beauty salons and cafés. #FFCBDB',
-    imageUrl: 'https://picsum.photos/id/28/800/600'
-  },
-  {
-    id: '3',
-    mode: 'cover',
-    storeUrl: 'nike.com',
-    vibePrompt: 'Bold sports lifestyle magazine with dynamic typography and high-contrast action photography. Combines urban street style with performance athletics. Would fit in the activewear or fitness genre. #FF0000',
-    imageUrl: 'https://picsum.photos/id/29/800/600'
-  },
-  {
-    id: '4',
-    mode: 'moodboard',
-    storeUrl: 'apple.com',
-    vibePrompt: 'Sleek, premium and minimalist with focus on clean lines and sophisticated typography. The color palette is monochromatic with hints of silver and space gray. Appeals to design-conscious professionals. #F5F5F7',
-    imageUrl: 'https://picsum.photos/id/30/800/600'
+// Remove hardcoded showcase items
+// const showcaseItems = [ ... ]
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  try {
+    const { db } = await connectToDatabase();
+    const collection = db.collection("vibeResults");
+    
+    // Get 4 most recent public vibes
+    const showcaseItems = await collection
+      .find({ isPublic: true })
+      .sort({ createdAt: -1 })
+      .limit(4)
+      .toArray();
+    
+    return json({ showcaseItems });
+  } catch (error) {
+    console.error("Error fetching showcase items:", error);
+    return json({ showcaseItems: [] });
   }
-];
+};
 
 export const meta: MetaFunction = () => {
   return [
@@ -224,6 +217,7 @@ const gradientAnimations = `
 `;
 
 export default function Index() {
+  const { showcaseItems } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
@@ -567,7 +561,7 @@ export default function Index() {
           )}
 
           {/* Showcase Slider */}
-          {showShowcase && (
+          {showShowcase && showcaseItems.length > 0 && (
             <div style={{ marginBottom: '40px', paddingTop: '20px', backgroundColor: 'var(--p-surface-subdued)', borderRadius: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '0 16px' }}>
                 <Text variant="headingMd" as="h2">Explore Generated Vibes</Text>
@@ -594,7 +588,7 @@ export default function Index() {
                 }}>
                   {showcaseItems.map((item) => (
                     <div 
-                      key={item.id} 
+                      key={item._id} 
                       style={{ 
                         width: '280px',
                         borderRadius: '8px',
@@ -614,30 +608,35 @@ export default function Index() {
                         e.currentTarget.style.boxShadow = 'none';
                       }}
                     >
-                      <div style={{ height: '160px', overflow: 'hidden' }}>
-                        <img
-                          src={item.imageUrl}
-                          alt={`${item.mode} example for ${item.storeUrl}`}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                      </div>
-                      <div style={{ padding: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <Badge tone="success" progress="complete">
-                            {
-                              item.mode === "city" 
-                                ? "🏙 Store as a City" 
-                                : item.mode === "cover" 
-                                  ? "🎭 Magazine/Album Cover" 
-                                  : "🧵 Moodboard"
-                            }
-                          </Badge>
-                          <span style={{ color: 'var(--p-text-subdued)', fontSize: '12px' }}>{item.storeUrl}</span>
+                      <Link 
+                        to={item.seoId ? `/vibe/${item.seoId}` : `/vibe/${item._id}`}
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                      >
+                        <div style={{ height: '160px', overflow: 'hidden' }}>
+                          <img
+                            src={item.imageUrl}
+                            alt={`${item.mode} example for ${item.storeUrl}`}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
                         </div>
-                        <div style={{ maxHeight: '60px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          <Text variant="bodyMd" as="p">{item.vibePrompt.substring(0, 90)}...</Text>
+                        <div style={{ padding: '12px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <Badge tone="success" progress="complete">
+                              {
+                                item.mode === "city" 
+                                  ? "🏙 City" 
+                                  : item.mode === "cover" 
+                                    ? "🎭 M/Album" 
+                                    : "🧵 M"
+                              }
+                            </Badge>
+                            <span style={{ color: 'var(--p-text-subdued)', fontSize: '12px' }}>{item.storeUrl}</span>
+                          </div>
+                          <div style={{ maxHeight: '60px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <Text variant="bodyMd" as="p">{item.vibePrompt.substring(0, 90)}...</Text>
+                          </div>
                         </div>
-                      </div>
+                      </Link>
                     </div>
                   ))}
                 </div>
