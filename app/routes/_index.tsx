@@ -24,6 +24,7 @@ import {
   Scrollable
 } from '@shopify/polaris';
 import { useState, useEffect } from 'react';
+import React from 'react';
 
 // Sample showcase items - in a real app, these would come from a database or API
 const showcaseItems = [
@@ -114,6 +115,114 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 }
 
+// Add animations to tailwind.css or include them inline here
+const gradientAnimations = `
+@keyframes start-header-gradient-1 {
+  0% {
+    opacity: 0;
+    transform: translate(-30%, 10%) rotate(-30deg) scale(0.8);
+    background: #79DFFF;
+    filter: blur(204px);
+  }
+  20% {
+    opacity: 0.3;
+    transform: translate(-27%, 7%) rotate(-30deg) scale(0.9);
+    background: #79DFFF;
+    filter: blur(204px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-20%, 0%) rotate(-30deg) scale(1.05);
+    background: #6A9DFF;
+    filter: blur(204px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-10%, -10%) rotate(-30deg) scale(1);
+    background: #79DFFF;
+    filter: blur(204px);
+  }
+}
+
+@keyframes start-header-gradient-2 {
+  0% {
+    opacity: 0;
+    transform: translate(-85%, -65%) rotate(80deg) scaleX(0.65) scale(0.8);
+    background: linear-gradient(45deg, #79DFFF, #84C6C5);
+    filter: blur(204px);
+  }
+  20% {
+    opacity: 0.3;
+    transform: translate(-82%, -68%) rotate(80deg) scaleX(0.65) scale(0.85);
+    background: linear-gradient(45deg, #79DFFF, #84C6C5);
+    filter: blur(204px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-75%, -75%) rotate(80deg) scaleX(0.65) scale(1.05);
+    background: linear-gradient(45deg, #F686BD, #A254FF);
+    filter: blur(204px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-65%, -85%) rotate(80deg) scaleX(0.65) scale(1);
+    background: linear-gradient(45deg, #79DFFF, #84C6C5);
+    filter: blur(204px);
+  }
+}
+
+@keyframes start-header-gradient-3 {
+  0% {
+    opacity: 0;
+    transform: translate(-20%, -35%) rotate(-50deg) scaleY(0.65) scale(0.8);
+    background: #1CAA86;
+    filter: blur(228px);
+  }
+  20% {
+    opacity: 0.3;
+    transform: translate(-17%, -32%) rotate(-50deg) scaleY(0.65) scale(0.85);
+    background: #1CAA86;
+    filter: blur(228px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-10%, -25%) rotate(-50deg) scaleY(0.65) scale(1.05);
+    background: #30D397;
+    filter: blur(228px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0%, -15%) rotate(-50deg) scaleY(0.65) scale(1);
+    background: #1CAA86;
+    filter: blur(228px);
+  }
+}
+
+@keyframes pulse-gradient {
+  0% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05) translate(-1%, -1%);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.8;
+  }
+}
+
+@keyframes color-shift {
+  0%, 5% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
+}
+`;
+
 export default function Index() {
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
@@ -122,8 +231,18 @@ export default function Index() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [showShowcase, setShowShowcase] = useState(true);
+  const formRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   const togglePopoverActive = () => setPopoverActive(!popoverActive);
+  
+  const handleScrollToForm = () => {
+    formRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Add a slight delay to focus the input after scrolling
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 800);
+  };
   
   const handleCopyToClipboard = () => {
     // Use SEO ID if available, otherwise use MongoDB ID, and fallback to window.location.href
@@ -148,10 +267,10 @@ export default function Index() {
         : window.location.href;
       
     const text = actionData?.mode === "city" 
-      ? "Check out this AI-generated cityscape of my store!" 
+      ? "Check out this AI-generated cityscape for our #shopify store!" 
       : actionData?.mode === "cover" 
-        ? "Check out this AI-generated magazine cover for my store!" 
-        : "Check out this AI-generated moodboard for my store!";
+        ? "Check out this AI-generated magazine cover for our #shopify store!" 
+        : "Check out this AI-generated moodboard for our #shopify store!";
     
     const url = encodeURIComponent(shareUrl);
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`, '_blank');
@@ -198,290 +317,341 @@ export default function Index() {
 
   return (
     <Frame>
-      <Page
-        title="Store Vibe Generator"
-        subtitle="Generate an AI-powered brand vibe from your Shopify store."
-        titleMetadata={
-          <Badge tone="info">Beta</Badge>
-        }
-        primaryAction={{
-          content: "Explore All Vibes",
-          url: "/explore",
-          accessibilityLabel: "Explore all generated vibes"
-        }}
-      >
+      <style dangerouslySetInnerHTML={{ __html: gradientAnimations }} />
+
+      {/* Hero section with animated gradient */}
+      <div className="relative mb-8" style={{ height: '500px', overflow: 'hidden', marginBottom: '2rem' }}>
+        {/* Gradient background */}
+        <div className="absolute top-0 w-full h-full overflow-hidden" style={{ 
+          animation: 'color-shift 30s infinite ease-in-out',
+          background: '#5FD5B6',
+          backgroundSize: '400% 400%',
+          backgroundImage: 'linear-gradient(135deg, #5FD5B6, #4E95D6, #8C6AD1, #6CAEFF)',
+          animationTimingFunction: 'cubic-bezier(0.22, 0.61, 0.36, 1)'
+        }}>
+          <div className="will-change-transform w-[1518px] h-[1342px] translate-x-[-20%] translate-y-[0px] rotate-[-30deg] top-1/2 left-1/2 origin-center absolute rounded-full bg-[#79DFFF] mix-blend-normal blur-[204px] opacity-0 animate-[start-header-gradient-1_3s_cubic-bezier(0.22,0.61,0.36,1)_forwards,pulse-gradient_12s_ease-in-out_3s_infinite]"></div>
+          <div className="will-change-transform w-[1060px] h-[1060px] scale-x-[0.65] translate-x-[-75%] translate-y-[-75%] rotate-[80deg] top-1/2 left-1/2 origin-center absolute rounded-full bg-gradient-to-b from-[#79DFFF] to-[#84C6C5] mix-blend-normal blur-[204px] opacity-0 animate-[start-header-gradient-2_3.5s_cubic-bezier(0.22,0.61,0.36,1)_0.3s_forwards,pulse-gradient_15s_ease-in-out_3.8s_infinite]"></div>
+          <div className="will-change-transform w-[1242px] h-[1242px] top-[50%] left-[50%] translate-x-[-10%] translate-y-[-25%] scale-y-[0.65] rotate-[-50deg] origin-center absolute rounded-full bg-[#1CAA86] mix-blend-normal blur-[228px] opacity-0 animate-[start-header-gradient-3_4s_cubic-bezier(0.22,0.61,0.36,1)_0.6s_forwards,pulse-gradient_18s_ease-in-out_4.6s_infinite]"></div>
+          <div className="absolute bottom-0 w-full h-[400px] bg-gradient-to-t from-white to-transparent"></div>
+        </div>
         
+        {/* Hero content */}
+        <div className="relative h-full flex flex-col items-start justify-center px-6 md:px-12 lg:px-16 max-w-7xl mx-auto w-full">
+          <div className="text-left">
+            <h1 className="text-5xl tracking-tight text-black sm:text-6xl md:text-7xl mb-4" 
+                style={{ 
+                  textShadow: '0 2px 10px rgba(255,255,255,0.3)',
+                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  fontWeight: '400'
+                }}>
+              Ready to visualize <br/>your store's vibe?
+            </h1>
+            <p className="mt-3 text-xl text-black text-opacity-90 max-w-xl"
+               style={{ 
+                 textShadow: '0 1px 4px rgba(255,255,255,0.25)',
+                 fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                 fontWeight: '400',
+                 lineHeight: '1.4'
+               }}>
+              Get a beautiful AI-powered mood board based entirely on your Shopify store.
+            </p>
+            <div className="mt-6 flex space-x-4">
+              <Button
+                onClick={handleScrollToForm}
+                variant="primary"
+                size="large"
+              >
+                Get Started
+              </Button>
 
-        <LegacyCard sectioned>
-          <Text variant="bodyMd" as="p">
-            Enter your Shopify store URL to generate a unique vibe — as a brand moodboard, a poetic cityscape, or a stylish magazine/album cover.
-          </Text>
-          
-          <div style={{ marginTop: '20px' }}>
-            <Form method="post">
-              <FormLayout>
-                <div>
-                  <label htmlFor="storeUrl" style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 'medium', color: 'var(--p-text)' }}>
-                    Shopify Store URL <span style={{ color: 'var(--p-text-critical)' }}>*</span>
-                  </label>
-                  <input
-                    type="url"
-                    name="storeUrl"
-                    id="storeUrl"
-                    placeholder="https://your-store.myshopify.com"
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '4px',
-                      border: '1px solid var(--p-border-subdued)',
-                      fontSize: '14px',
-                      backgroundColor: 'white',
-                      color: '#202223',
-                      outline: 'none'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.boxShadow = '0 0 0 2px #5c6ac4';
-                      e.target.style.borderColor = '#5c6ac4';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = 'none';
-                      e.target.style.borderColor = 'var(--p-border-subdued)';
-                    }}
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="mode" style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 'medium', color: 'var(--p-text)' }}>
-                    Vibe Style
-                  </label>
-                  <select
-                    name="mode"
-                    id="mode"
-                    defaultValue="cover"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '4px',
-                      border: '1px solid var(--p-border-subdued)',
-                      fontSize: '14px',
-                      backgroundColor: 'white',
-                      color: '#202223',
-                      outline: 'none'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.boxShadow = '0 0 0 2px #5c6ac4';
-                      e.target.style.borderColor = '#5c6ac4';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = 'none';
-                      e.target.style.borderColor = 'var(--p-border-subdued)';
-                    }}
-                  >
-                    <option value="moodboard">🧵 Moodboard</option>
-                    <option value="city">🏙 Store as a City</option>
-                    <option value="cover">🎭 Magazine/Album Cover</option>
-                  </select>
-                </div>
-                
-                <Button 
-                  variant="primary"
-                  submit
-                  disabled={isSubmitting}
-                  loading={isSubmitting}
-                >
-                  {isSubmitting ? "Generating..." : "Generate Store Vibe"}
-                </Button>
-              </FormLayout>
-            </Form>
-          </div>
-        </LegacyCard>
-
-        {actionData?.error && (
-          <div style={{ marginTop: '20px' }}>
-            <Banner tone="critical">
-              <p>{actionData.error}</p>
-            </Banner>
-          </div>
-        )}
-
-        {actionData?.vibePrompt && !actionData.error && (
-          <div style={{ marginTop: '20px' }}>
-            <LegacyCard sectioned>
-              <LegacyCard.Section title="Your Store Vibe">
-                <Badge tone="success" progress="complete">
-                  {
-                    actionData.mode === "city" 
-                      ? "🏙 Store as a City" 
-                      : actionData.mode === "cover" 
-                        ? "🎭 Magazine/Album Cover" 
-                        : "🧵 Moodboard"
-                  }
-                </Badge>
-                
-                <div style={{ margin: '16px 0', borderBottom: '1px solid var(--p-border-subdued)' }}></div>
-                
-                <div style={{ marginTop: '16px', marginBottom: '20px', lineHeight: '1.6' }}>
-                  <ReactMarkdown>{actionData.vibePrompt}</ReactMarkdown>
-                </div>
-
-                {actionData.imageUrl && (
-                  <LegacyStack vertical>
-                    <Text variant="headingMd" as="h3">Generated Image</Text>
-                    <div style={{ 
-                      border: '1px solid var(--p-border-subdued)',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      marginBottom: '16px'
-                    }}>
-                      <img
-                        src={actionData.imageUrl}
-                        alt="Generated store vibe visualization"
-                        style={{ width: '100%', display: 'block' }}
-                      />
-                    </div>
-                  </LegacyStack>
-                )}
-
-                <LegacyStack distribution="trailing">
-                  <ButtonGroup>
-                    {(actionData.dbId || actionData.seoId) && (
-                      <Button
-                        url={actionData.seoId 
-                          ? `/v/${actionData.seoId}` 
-                          : `/vibe/${actionData.dbId}`}
-                        variant="secondary"
-                      >
-                        View Permanent Page
-                      </Button>
-                    )}
-                    <div>
-                      <Popover
-                        active={popoverActive}
-                        activator={
-                          <Button
-                            onClick={togglePopoverActive}
-                            variant="primary"
-                          >
-                            Share this vibe 🚀
-                          </Button>
-                        }
-                        onClose={togglePopoverActive}
-                      >
-                        <ActionList
-                          actionRole="menuitem"
-                          items={[
-                            {
-                              content: 'Copy link',
-                              onAction: handleCopyToClipboard,
-                            },
-                            {
-                              content: 'Share on X',
-                              onAction: handleShareOnTwitter,
-                            },
-                            {
-                              content: 'Share on Facebook',
-                              onAction: handleShareOnFacebook,
-                            },
-                            ...(actionData?.imageUrl ? [{
-                              content: 'Download image',
-                              onAction: handleDownloadImage,
-                            }] : []),
-                          ]}
-                        />
-                      </Popover>
-                      {showToast && (
-                        <Toast content={toastMessage} onDismiss={() => setShowToast(false)} />
-                      )}
-                    </div>
-                  </ButtonGroup>
-                </LegacyStack>
-              </LegacyCard.Section>
-            </LegacyCard>
-          </div>
-        )}
-
-         {/* Showcase Slider */}
-        {showShowcase && (
-          <div style={{  marginBottom: '40px', paddingTop: '20px', backgroundColor: 'var(--p-surface-subdued)', borderRadius: '8px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '0 16px' }}>
-              <Text variant="headingMd" as="h2">Explore Generated Vibes</Text>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <Button
-                  variant="plain"
-                  onClick={() => setShowShowcase(false)}
-                >
-                  Hide examples
-                </Button>
-                <Button
-                  url="/explore"
-                  variant="plain"
-                >
-                  See all →
-                </Button>
+              <Button
+                url="/explore"
+                variant="primary"
+                size="large"
+              >
+                Explore All Vibes
+              </Button>
+              <div className="inline-flex">
+                <Badge tone="info">Beta</Badge>
               </div>
             </div>
-            <Scrollable style={{ height: 'auto' }} horizontal>
-              <div style={{ 
-                display: 'flex', 
-                gap: '16px', 
-                padding: '8px 4px 16px 4px'
-              }}>
-                {showcaseItems.map((item) => (
-                  <div 
-                    key={item.id} 
-                    style={{ 
-                      width: '280px',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      border: '1px solid var(--p-border-subdued)',
-                      background: 'white',
-                      flexShrink: 0,
-                      cursor: 'pointer',
-                      transition: 'transform 0.2s, box-shadow 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-4px)';
-                      e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                  >
-                    <div style={{ height: '160px', overflow: 'hidden' }}>
-                      <img
-                        src={item.imageUrl}
-                        alt={`${item.mode} example for ${item.storeUrl}`}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    </div>
-                    <div style={{ padding: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <Badge tone="success" progress="complete">
-                          {
-                            item.mode === "city" 
-                              ? "🏙 Store as a City" 
-                              : item.mode === "cover" 
-                                ? "🎭 Magazine/Album Cover" 
-                                : "🧵 Moodboard"
-                          }
-                        </Badge>
-                        <span style={{ color: 'var(--p-text-subdued)', fontSize: '12px' }}>{item.storeUrl}</span>
-                      </div>
-                      <div style={{ maxHeight: '60px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        <Text variant="bodyMd" as="p">{item.vibePrompt.substring(0, 90)}...</Text>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Scrollable>
           </div>
-        )}
+        </div>
+      </div>
+      
+      {/* Main content */}
+      <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div ref={formRef}>
+          <LegacyCard sectioned>
+            <Text variant="bodyMd" as="p">
+              Enter your Shopify store URL to generate a unique vibe — as a brand moodboard, a poetic cityscape, or a stylish magazine/album cover.
+            </Text>
+            
+            <div style={{ marginTop: '20px' }}>
+              <Form method="post">
+                <FormLayout>
+                  <div>
+                    <label htmlFor="storeUrl" style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 'medium', color: 'var(--p-text)' }}>
+                      Shopify Store URL <span style={{ color: 'var(--p-text-critical)' }}>*</span>
+                    </label>
+                    <input
+                      ref={inputRef}
+                      type="url"
+                      name="storeUrl"
+                      id="storeUrl"
+                      placeholder="https://your-store.myshopify.com"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--p-border-subdued)',
+                        fontSize: '14px',
+                        backgroundColor: 'white',
+                        color: '#202223',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.boxShadow = '0 0 0 2px #5c6ac4';
+                        e.target.style.borderColor = '#5c6ac4';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.boxShadow = 'none';
+                        e.target.style.borderColor = 'var(--p-border-subdued)';
+                      }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="mode" style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 'medium', color: 'var(--p-text)' }}>
+                      Vibe Style
+                    </label>
+                    <select
+                      name="mode"
+                      id="mode"
+                      defaultValue="cover"
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--p-border-subdued)',
+                        fontSize: '14px',
+                        backgroundColor: 'white',
+                        color: '#202223',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.boxShadow = '0 0 0 2px #5c6ac4';
+                        e.target.style.borderColor = '#5c6ac4';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.boxShadow = 'none';
+                        e.target.style.borderColor = 'var(--p-border-subdued)';
+                      }}
+                    >
+                      <option value="moodboard">🧵 Moodboard</option>
+                      <option value="city">🏙 Store as a City</option>
+                      <option value="cover">🎭 Magazine/Album Cover</option>
+                    </select>
+                  </div>
+                  
+                  <Button 
+                    variant="primary"
+                    submit
+                    disabled={isSubmitting}
+                    loading={isSubmitting}
+                  >
+                    {isSubmitting ? "Generating..." : "Generate Store Vibe"}
+                  </Button>
+                </FormLayout>
+              </Form>
+            </div>
+          </LegacyCard>
 
-        
-      </Page>
+          {actionData?.error && (
+            <div style={{ marginTop: '20px' }}>
+              <Banner tone="critical">
+                <p>{actionData.error}</p>
+              </Banner>
+            </div>
+          )}
+
+          {actionData?.vibePrompt && !actionData.error && (
+            <div style={{ marginTop: '20px' }}>
+              <LegacyCard sectioned>
+                <LegacyCard.Section title="Your Store Vibe">
+                  <Badge tone="success" progress="complete">
+                    {
+                      actionData.mode === "city" 
+                        ? "🏙 Store as a City" 
+                        : actionData.mode === "cover" 
+                          ? "🎭 Magazine/Album Cover" 
+                          : "🧵 Moodboard"
+                    }
+                  </Badge>
+                  
+                  <div style={{ margin: '16px 0', borderBottom: '1px solid var(--p-border-subdued)' }}></div>
+                  
+                  <div style={{ marginTop: '16px', marginBottom: '20px', lineHeight: '1.6' }}>
+                    <ReactMarkdown>{actionData.vibePrompt}</ReactMarkdown>
+                  </div>
+
+                  {actionData.imageUrl && (
+                    <LegacyStack vertical>
+                      <Text variant="headingMd" as="h3">Generated Image</Text>
+                      <div style={{ 
+                        border: '1px solid var(--p-border-subdued)',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        marginBottom: '16px'
+                      }}>
+                        <img
+                          src={actionData.imageUrl}
+                          alt="Generated store vibe visualization"
+                          style={{ width: '100%', display: 'block' }}
+                        />
+                      </div>
+                    </LegacyStack>
+                  )}
+
+                  <LegacyStack distribution="trailing">
+                    <ButtonGroup>
+                      {(actionData.dbId || actionData.seoId) && (
+                        <Button
+                          url={actionData.seoId 
+                            ? `/v/${actionData.seoId}` 
+                            : `/vibe/${actionData.dbId}`}
+                          variant="secondary"
+                        >
+                          View Permanent Page
+                        </Button>
+                      )}
+                      <div>
+                        <Popover
+                          active={popoverActive}
+                          activator={
+                            <Button
+                              onClick={togglePopoverActive}
+                              variant="primary"
+                            >
+                              Share this vibe 🚀
+                            </Button>
+                          }
+                          onClose={togglePopoverActive}
+                        >
+                          <ActionList
+                            actionRole="menuitem"
+                            items={[
+                              {
+                                content: 'Copy link',
+                                onAction: handleCopyToClipboard,
+                              },
+                              {
+                                content: 'Share on X',
+                                onAction: handleShareOnTwitter,
+                              },
+                              {
+                                content: 'Share on Facebook',
+                                onAction: handleShareOnFacebook,
+                              },
+                              ...(actionData?.imageUrl ? [{
+                                content: 'Download image',
+                                onAction: handleDownloadImage,
+                              }] : []),
+                            ]}
+                          />
+                        </Popover>
+                        {showToast && (
+                          <Toast content={toastMessage} onDismiss={() => setShowToast(false)} />
+                        )}
+                      </div>
+                    </ButtonGroup>
+                  </LegacyStack>
+                </LegacyCard.Section>
+              </LegacyCard>
+            </div>
+          )}
+
+          {/* Showcase Slider */}
+          {showShowcase && (
+            <div style={{ marginBottom: '40px', paddingTop: '20px', backgroundColor: 'var(--p-surface-subdued)', borderRadius: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '0 16px' }}>
+                <Text variant="headingMd" as="h2">Explore Generated Vibes</Text>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button
+                    variant="plain"
+                    onClick={() => setShowShowcase(false)}
+                  >
+                    Hide examples
+                  </Button>
+                  <Button
+                    url="/explore"
+                    variant="plain"
+                  >
+                    See all →
+                  </Button>
+                </div>
+              </div>
+              <Scrollable style={{ height: 'auto' }} horizontal>
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '16px', 
+                  padding: '8px 4px 16px 4px'
+                }}>
+                  {showcaseItems.map((item) => (
+                    <div 
+                      key={item.id} 
+                      style={{ 
+                        width: '280px',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        border: '1px solid var(--p-border-subdued)',
+                        background: 'white',
+                        flexShrink: 0,
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <div style={{ height: '160px', overflow: 'hidden' }}>
+                        <img
+                          src={item.imageUrl}
+                          alt={`${item.mode} example for ${item.storeUrl}`}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </div>
+                      <div style={{ padding: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <Badge tone="success" progress="complete">
+                            {
+                              item.mode === "city" 
+                                ? "🏙 Store as a City" 
+                                : item.mode === "cover" 
+                                  ? "🎭 Magazine/Album Cover" 
+                                  : "🧵 Moodboard"
+                            }
+                          </Badge>
+                          <span style={{ color: 'var(--p-text-subdued)', fontSize: '12px' }}>{item.storeUrl}</span>
+                        </div>
+                        <div style={{ maxHeight: '60px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <Text variant="bodyMd" as="p">{item.vibePrompt.substring(0, 90)}...</Text>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Scrollable>
+            </div>
+          )}
+        </div>
+      </div>
     </Frame>
   );
 }
