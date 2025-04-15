@@ -227,6 +227,8 @@ export default function Index() {
   const [showShowcase, setShowShowcase] = useState(true);
   const formRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const [timeLeft, setTimeLeft] = useState(25);
+  const [timerActive, setTimerActive] = useState(false);
 
   const togglePopoverActive = () => setPopoverActive(!popoverActive);
   
@@ -302,6 +304,28 @@ export default function Index() {
       setShowShowcase(false);
     }
   }, [actionData]);
+
+  // Timer effect
+  useEffect(() => {
+    if (!isSubmitting) {
+      setTimeLeft(25);
+      setTimerActive(false);
+      return;
+    }
+
+    setTimerActive(true);
+    const timer = setInterval(() => {
+      setTimeLeft((prevTime) => {
+        if (prevTime <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isSubmitting]);
 
   return (
     <Frame>
@@ -451,6 +475,46 @@ export default function Index() {
                   >
                     {isSubmitting ? "Generating..." : "Generate Store Vibe"}
                   </Button>
+
+                  {/* Timer display */}
+                  {isSubmitting && (
+                    <div style={{ 
+                      marginTop: '16px',
+                      textAlign: 'center',
+                      padding: '12px',
+                      backgroundColor: 'var(--p-surface-subdued)',
+                      borderRadius: '4px',
+                      animation: 'pulse 2s infinite'
+                    }}>
+                      <style>
+                        {`
+                          @keyframes pulse {
+                            0% { opacity: 0.6; }
+                            50% { opacity: 1; }
+                            100% { opacity: 0.6; }
+                          }
+                        `}
+                      </style>
+                      <Text variant="bodyMd" as="p" tone="subdued">
+                        Generating your store vibe... {timeLeft}s remaining
+                      </Text>
+                      <div style={{ 
+                        width: '100%', 
+                        height: '4px', 
+                        backgroundColor: 'var(--p-border-subdued)',
+                        borderRadius: '2px',
+                        marginTop: '8px',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: `${(timeLeft / 25) * 100}%`,
+                          height: '100%',
+                          backgroundColor: 'var(--p-action-primary)',
+                          transition: 'width 1s linear'
+                        }} />
+                      </div>
+                    </div>
+                  )}
                 </FormLayout>
               </Form>
             </div>
