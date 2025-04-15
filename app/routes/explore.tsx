@@ -15,7 +15,7 @@ import {
   ButtonGroup,
   Toast
 } from '@shopify/polaris';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 type VibeResult = {
@@ -67,8 +67,73 @@ export default function ExploreVibes() {
   const currentMode = searchParams.get('mode') || '';
   const currentPage = parseInt(searchParams.get('page') || '1');
   const [selectedVibe, setSelectedVibe] = useState<VibeResult | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    if (!selectedVibe) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigatePrevious();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        navigateNext();
+      } else if (e.key === 'Escape') {
+        handleCloseModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedIndex, vibes]);
+
+  // Navigation functions
+  const navigateNext = () => {
+    if (selectedIndex < vibes.length - 1) {
+      setSelectedIndex(selectedIndex + 1);
+      setSelectedVibe(vibes[selectedIndex + 1]);
+    }
+  };
+
+  const navigatePrevious = () => {
+    if (selectedIndex > 0) {
+      setSelectedIndex(selectedIndex - 1);
+      setSelectedVibe(vibes[selectedIndex - 1]);
+    }
+  };
+
+  // Touch event handlers for swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+
+    const touchEnd = e.touches[0].clientX;
+    const diff = touchStart - touchEnd;
+
+    // Require at least 50px swipe
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        // Swipe left, go next
+        navigateNext();
+      } else {
+        // Swipe right, go previous
+        navigatePrevious();
+      }
+      setTouchStart(null);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setTouchStart(null);
+  };
 
   const handleModeChange = (value: string) => {
     const params = new URLSearchParams(searchParams);
@@ -87,12 +152,14 @@ export default function ExploreVibes() {
     setSearchParams(params);
   };
 
-  const handleVibeClick = (vibe: VibeResult) => {
+  const handleVibeClick = (vibe: VibeResult, index: number) => {
     setSelectedVibe(vibe);
+    setSelectedIndex(index);
   };
 
   const handleCloseModal = () => {
     setSelectedVibe(null);
+    setSelectedIndex(-1);
   };
 
   const handleShareLink = useCallback(() => {
@@ -210,7 +277,68 @@ export default function ExploreVibes() {
             size="large"
           >
             <Modal.Section>
-              <div style={{ maxWidth: '100%', margin: '0 auto' }}>
+              <div 
+                style={{ maxWidth: '100%', margin: '0 auto' }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                {/* Navigation buttons */}
+                <div style={{ 
+                  position: 'absolute', 
+                  top: '50%', 
+                  left: 0, 
+                  right: 0, 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  padding: '0 16px', 
+                  pointerEvents: 'none', 
+                  zIndex: 1,
+                  transform: 'translateY(-50%)'
+                }}>
+                  <style>
+                    {`
+                      button.nav-button {
+                        pointer-events: auto;
+                        background-color: rgba(255, 255, 255, 0.8);
+                        border-radius: 50%;
+                        min-width: 40px;
+                        width: 40px;
+                        height: 40px;
+                        padding: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        backdrop-filter: blur(4px);
+                        border: none;
+                        cursor: pointer;
+                        transition: background-color 0.2s;
+                      }
+                      button.nav-button:hover {
+                        background-color: rgba(255, 255, 255, 0.9);
+                      }
+                    `}
+                  </style>
+                  {selectedIndex > 0 && (
+                    <button
+                      onClick={navigatePrevious}
+                      className="nav-button"
+                      aria-label="Previous vibe"
+                    >
+                      <span style={{ fontSize: '24px' }}>←</span>
+                    </button>
+                  )}
+                  {selectedIndex < vibes.length - 1 && (
+                    <button
+                      onClick={navigateNext}
+                      className="nav-button"
+                      aria-label="Next vibe"
+                    >
+                      <span style={{ fontSize: '24px' }}>→</span>
+                    </button>
+                  )}
+                </div>
+
                 <div style={{ 
                   width: '100%', 
                   maxHeight: '50vh', 
@@ -307,7 +435,7 @@ export default function ExploreVibes() {
                 </div>
               </div>
             ) : (
-              vibes.map((vibe: VibeResult) => (
+              vibes.map((vibe: VibeResult, index: number) => (
                 <div 
                   key={vibe._id}
                   style={{ 
@@ -325,10 +453,10 @@ export default function ExploreVibes() {
                     e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.boxShadow = 'none';
                   }}
+                  onClick={() => handleVibeClick(vibe, index)}
                 >
                   <div 
                     style={{ height: '200px', overflow: 'hidden', cursor: 'pointer' }}
-                    onClick={() => handleVibeClick(vibe)}
                   >
                     <img
                       src={vibe.imageUrl}
@@ -351,7 +479,6 @@ export default function ExploreVibes() {
                     </div>
                     <div 
                       style={{ maxHeight: '60px', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '12px', cursor: 'pointer' }}
-                      onClick={() => handleVibeClick(vibe)}
                     >
                       <Text variant="bodyMd" as="p">
                         {vibe.vibePrompt.substring(0, 120)}...

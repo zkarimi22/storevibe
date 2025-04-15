@@ -308,7 +308,7 @@ export default function Index() {
   // Timer effect
   useEffect(() => {
     if (!isSubmitting) {
-      setTimeLeft(25);
+      setTimeLeft(35);
       setTimerActive(false);
       return;
     }
